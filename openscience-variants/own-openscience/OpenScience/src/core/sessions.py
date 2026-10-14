@@ -139,11 +139,12 @@ async def operation(frame, req):
         agent = profiles.selected(chosen)
         frame['agent_id'] = agent['id'] if agent else None
         extra_system = profiles.agent_context(frame['agent_id'])
+        previous_provider = frame.get('provider_id')
         if req.provider_id is not None:
             frame['provider_id'] = req.provider_id
         from .providers import selected
         provider = selected(frame.get('provider_id'))
-        frame['model'] = req.model or frame.get('model') or provider['model']
+        frame['model'] = req.model or (frame.get('model') if previous_provider == frame.get('provider_id') else None) or provider['model']
         frame['messages'] = complete_history(frame['messages'])
         frame['last_request'] = req.input_data
         frame['last_plan_mode'] = req.plan_mode

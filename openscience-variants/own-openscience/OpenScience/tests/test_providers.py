@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 import httpx
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from core import server, providers
@@ -84,5 +84,44 @@ class ProviderTests(unittest.TestCase):
             self.assertEqual(value['api_key'], 'legacy-secret')
             self.assertEqual(value['base_url'], 'http://legacy.invalid/v1')
             self.assertNotIn('legacy-secret', json.dumps(asyncio.run(providers.providers())))
+
+    def test_installed_cli_profiles_and_default_survive_reload(self):
+        with patch.object(providers.shutil, 'which', return_value='/fixture/cli'):
+            data = asyncio.run(providers.providers())
+            self.assertEqual({p['id'] for p in data['providers'] if p.get('transport') == 'local-cli'}, set(providers.CLI))
+            self.assertIsNone(next(p for p in data['providers'] if p['id'] == 'grok-cli')['authenticated'])
+            asyncio.run(providers.choose_default('grok-cli'))
+            self.assertEqual(providers.selected()['kind'], 'grok-cli')
+        with patch.object(providers.shutil, 'which', return_value=None):
+            with self.assertRaises(server.HTTPException): providers.selected('grok-cli')
+
+    def test_cli_models_and_host_tool_contract(self):
+        tool = {'name': 'run_python', 'parameters': {'code': 'Python code'}}
+        reply = json.dumps({'text': json.dumps({'content': '', 'tool_calls': [{'name': 'run_python', 'arguments': {'code': 'print(4)'}}]}), 'usage': {'output_tokens': 10}})
+        process = AsyncMock(side_effect=['Available models:\n * grok-4.7 (default)\n - grok-4.6', reply])
+        with patch.object(providers.shutil, 'which', return_value='/fixture/grok'), patch.object(providers, 'cli_process', process):
+            self.assertEqual(asyncio.run(providers.discover('grok-cli'))['models'], ['grok-4.7', 'grok-4.6'])
+            result = asyncio.run(providers.chat([{'role': 'user', 'content': 'Compute'}], [tool], provider_id='grok-cli'))
+        command, prompt = process.call_args.args
+        self.assertEqual(command[command.index('--tools') + 1], '')
+        self.assertIn('run_python', prompt)
+        self.assertEqual(result['tool_calls'][0]['arguments'], {'code': 'print(4)'})
+        self.assertEqual(result['usage']['output_tokens'], 10)
+        invalid = json.dumps({'text': '{"content":"","tool_calls":[{"name":"shell","arguments":{}}]}'})
+        with self.assertRaises(server.HTTPException): providers.cli_response(invalid, 'grok-cli', [tool], '')
+
+    def test_opencode_event_parser_and_failures(self):
+        output = json.dumps({'type': 'text', 'part': {'text': '{"content":"Result","tool_calls":[]}'}})
+        self.assertEqual(providers.cli_response(output, 'opencode-cli', [], '')['content'], 'Result')
+        for output in ['{"type":"error","error":{"message":"secret"}}', '{"type":"text","part":{"text":"invalid"}}']:
+            with self.assertRaises(server.HTTPException) as error: providers.cli_response(output, 'opencode-cli', [], '')
+            self.assertNotIn('secret', error.exception.detail)
+
+    def test_owned_cli_timeout_kills_process(self):
+        async def run():
+            with self.assertRaises(server.HTTPException) as error:
+                await providers.cli_process([sys.executable, '-c', 'import time; time.sleep(60)'], '', timeout=.1)
+            self.assertEqual(error.exception.status_code, 504)
+        asyncio.run(run())
 
 if __name__ == '__main__': unittest.main()

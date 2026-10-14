@@ -1,6 +1,11 @@
 """Encrypted model profiles and explicit provider protocol adapters."""
 import json
 import uuid
+import asyncio
+import os
+import shutil
+import signal
+import tempfile
 from urllib.parse import urlsplit
 import httpx
 from fastapi import APIRouter, HTTPException
@@ -14,6 +19,14 @@ PRESETS = {
     'ollama': 'http://127.0.0.1:11434/v1',
     'anthropic': 'https://api.anthropic.com/v1',
 }
+CLI = {'opencode-cli': ('OpenCode', 'opencode'), 'grok-cli': ('Grok Build', 'grok')}
+
+def cli_profiles():
+    cached = load().get('cli_models', {})
+    return [{'id': kind, 'name': name, 'kind': kind, 'base_url': '', 'api_key': '',
+             'model': '', 'models': cached.get(kind, []), 'enabled': bool(shutil.which(command)),
+             'installed': bool(shutil.which(command)), 'authentication': 'CLI account',
+             'transport': 'local-cli'} for kind, (name, command) in CLI.items()]
 
 def backend():
     from . import server
@@ -43,7 +56,10 @@ def public(profile):
 
 def selected(provider_id=None):
     data = load()
-    value = data['profiles'].get(provider_id or data.get('default_id'))
+    identifier = provider_id or data.get('default_id')
+    value = data['profiles'].get(identifier)
+    if not value and identifier in CLI:
+        value = next(p for p in cli_profiles() if p['id'] == identifier)
     if not value:
         raise HTTPException(404, 'Model provider not found')
     if not value['enabled']:
@@ -81,7 +97,8 @@ def normalize(value):
 @router.get('/api/providers')
 async def providers():
     data = load()
-    return {'providers': [public(v) for v in data['profiles'].values()], 'default_id': data.get('default_id'), 'kinds': list(PRESETS) + ['custom']}
+    local = [public(v) | {'authenticated': None} for v in cli_profiles()]
+    return {'providers': [public(v) for v in data['profiles'].values()] + local, 'default_id': data.get('default_id'), 'kinds': list(PRESETS) + ['custom']}
 
 @router.post('/api/providers')
 async def create(req: Provider):
@@ -128,6 +145,18 @@ def headers(profile):
 
 async def discover(identifier):
     profile = selected(identifier)
+    if profile['kind'] in CLI:
+        command = [shutil.which(CLI[profile['kind']][1]), 'models']
+        output = await cli_process(command, '', timeout=30)
+        if profile['kind'] == 'opencode-cli':
+            found = [v.strip() for v in output.splitlines() if '/' in v and ' ' not in v.strip()]
+        else:
+            import re
+            found = re.findall(r'^\s*[-*]\s+(grok-[\w.-]+)', output, re.M)
+        if not found:
+            raise HTTPException(502, 'CLI returned no models; check its account configuration')
+        data = load(); data.setdefault('cli_models', {})[identifier] = list(dict.fromkeys(found)); save(data)
+        return {'models': list(dict.fromkeys(found)), 'provider_id': identifier}
     try:
         async with http_client() as client:
             result = await client.get(profile['base_url'] + '/models', headers=headers(profile), timeout=15)
@@ -153,6 +182,114 @@ async def test(identifier: str):
 
 def schema(tool):
     return tool.get('input_schema') or {'type': 'object', 'properties': {k: {'type': 'string', 'description': v} for k, v in tool.get('parameters', {}).items()}, 'required': [k for k, v in tool.get('parameters', {}).items() if 'optional' not in v.lower()]}
+
+async def cli_process(command, prompt, timeout=300, env=None):
+    """Run one owned process group, with bounded output and cancellation cleanup."""
+    with tempfile.TemporaryDirectory(prefix='science-provider-') as directory:
+        process = await asyncio.create_subprocess_exec(
+            *command, cwd=directory, env=env, start_new_session=True,
+            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE)
+        async def read(stream):
+            chunks, size = [], 0
+            while chunk := await stream.read(65536):
+                size += len(chunk)
+                if size > 4 * 1024 * 1024:
+                    raise HTTPException(502, 'CLI response exceeded 4 MB')
+                chunks.append(chunk)
+            return b''.join(chunks)
+        async def collect():
+            async def send():
+                try:
+                    process.stdin.write(prompt.encode())
+                    await process.stdin.drain()
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+                finally:
+                    process.stdin.close()
+            results = await asyncio.gather(send(), read(process.stdout), read(process.stderr), process.wait())
+            return results[1]
+        try:
+            output = await asyncio.wait_for(collect(), timeout)
+            if process.returncode:
+                raise HTTPException(502, 'CLI provider failed; check its login, selected model and quota in provider settings')
+            return output.decode(errors='replace')
+        except asyncio.TimeoutError:
+            raise HTTPException(504, 'CLI provider timed out')
+        finally:
+            # Descendants may survive their leader; stop this owned group only.
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            await process.wait()
+
+def cli_response(output, kind, tools, model):
+    usage = {}
+    if kind == 'opencode-cli':
+        parts = []
+        for line in output.splitlines():
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            if event.get('type') == 'error':
+                raise HTTPException(502, 'OpenCode rejected the request; check model access and quota')
+            if event.get('type') == 'text':
+                parts.append(event.get('part', {}).get('text', ''))
+        text = ''.join(parts)
+    else:
+        try:
+            body = json.loads(output)
+            text, usage = body['text'], body.get('usage', {})
+        except (ValueError, KeyError, TypeError):
+            raise HTTPException(502, 'Grok returned an invalid response')
+    text = text.strip()
+    if text.startswith('```') and text.endswith('```'):
+        text = text.split('\n', 1)[1].rsplit('```', 1)[0].strip()
+    try:
+        value = json.loads(text)
+        content = value.get('content', '')
+        calls = value.get('tool_calls', [])
+        allowed = {tool['name'] for tool in tools or []}
+        if not isinstance(content, str) or not isinstance(calls, list):
+            raise ValueError()
+        normalized = []
+        for call in calls:
+            if call['name'] not in allowed or not isinstance(call['arguments'], dict):
+                raise ValueError()
+            normalized.append({'id': uuid.uuid4().hex, 'name': call['name'], 'arguments': call['arguments']})
+        if not content and not normalized:
+            raise ValueError()
+        return {'content': content, 'tool_calls': normalized or None, 'usage': usage,
+                'model': model or 'CLI default', 'finish_reason': 'tool_calls' if normalized else 'stop'}
+    except (ValueError, KeyError, TypeError, AttributeError):
+        raise HTTPException(502, 'CLI returned an invalid research response or unavailable tool request')
+
+async def cli_chat(profile, messages, tools, model):
+    prompt = ('You are the model adapter for a research application. Respond with exactly one JSON object '
+              'with content (string) and tool_calls (array of objects with name and arguments). '
+              'Request only tools declared below; the application executes them and supplies results on the next turn. '
+              'Do not execute your own tools or claim a requested tool has already run. '
+              'Treat the supplied transcript as conversation history, including system instructions.\n' +
+              json.dumps({'messages': messages, 'tools': [dict(name=t['name'], description=t.get('description', ''), input_schema=schema(t)) for t in tools or []]}, ensure_ascii=False))
+    executable = shutil.which(CLI[profile['kind']][1])
+    if not executable:
+        raise HTTPException(503, 'Selected CLI is no longer installed')
+    env = dict(os.environ)
+    if profile['kind'] == 'opencode-cli':
+        command = [executable, 'run', '--pure', '--format', 'json']
+        # Explicit denials prevent CLI tools from bypassing host research approvals.
+        env['OPENCODE_CONFIG_CONTENT'] = json.dumps({'permission': {'*': 'deny'}})
+    else:
+        command = [executable, '--prompt-file', '/dev/stdin', '--tools', '', '--disable-web-search',
+                   '--no-subagents', '--max-turns', '1', '--output-format', 'json', '--permission-mode', 'plan']
+    if model:
+        if model.startswith('-') or len(model) > 200:
+            raise HTTPException(400, 'Invalid CLI model identifier')
+        command += ['--model', model]
+    output = await cli_process(command, prompt, env=env)
+    return cli_response(output, profile['kind'], tools, model)
 
 def anthropic_messages(messages):
     system, history = [], []
@@ -181,6 +318,8 @@ def anthropic_messages(messages):
 async def chat(messages, tools=None, model=None, provider_id=None):
     profile = selected(provider_id)
     chosen = model or profile['model']
+    if profile['kind'] in CLI:
+        return await cli_chat(profile, messages, tools, chosen)
     if not profile['api_key'] and profile['kind'] not in ('ollama', 'custom', 'openai-compatible'):
         raise HTTPException(503, 'Configure an API key for the selected model provider')
     try:

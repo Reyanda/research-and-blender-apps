@@ -1,11 +1,12 @@
 import asyncio
+import json
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
-from core import server, sessions
+from core import server, sessions, providers
 from fastapi.testclient import TestClient
 
 class SessionTests(unittest.TestCase):
@@ -38,6 +39,29 @@ class SessionTests(unittest.TestCase):
         self.assertNotIn('first topic', str(calls[1][0]))
         self.assertEqual(self.client.get(f'/api/frames/{first}').json()['status'], 'completed')
         self.assertEqual(server.get_proj(self.pid)['messages'], [])
+
+    def test_cli_provider_switch_and_actual_artifact_handoff(self):
+        fid = self.frame()
+        async def api_model(*args, **kwargs): return {'content': 'API result', 'tool_calls': None}
+        with patch.object(server, 'llm_chat', side_effect=api_model):
+            self.client.post(f'/api/frames/{fid}/message', json={'input_data': 'First', 'model': 'api-only-model'})
+        replies = [json.dumps({'text': json.dumps({'content': '', 'tool_calls': [{'name': 'write_artifact', 'arguments': {'filename': 'answer.txt', 'content': 'Exact CLI artifact'}}]})}),
+                   json.dumps({'text': '{"content":"Saved answer.txt","tool_calls":[]}'})]
+        cli = AsyncMock(side_effect=replies)
+        with patch.object(providers.shutil, 'which', return_value='/fixture/grok'), patch.object(providers, 'cli_process', cli):
+            response = self.client.post(f'/api/frames/{fid}/message', json={'input_data': 'Save an artifact', 'provider_id': 'grok-cli'})
+        self.assertEqual(response.status_code, 200, response.text)
+        command = cli.call_args_list[0].args[0]
+        self.assertNotIn('api-only-model', command)
+        frame = sessions.find(fid)
+        self.assertEqual(frame['provider_id'], 'grok-cli')
+        self.assertEqual(frame['messages'][-1]['content'], 'Saved answer.txt')
+        self.assertIn('API result', cli.call_args_list[0].args[1])
+        self.assertIn('tool_call_id', cli.call_args_list[1].args[1])
+        artifacts = server.get_proj(self.pid)['artifacts']
+        self.assertTrue(artifacts)
+        result = asyncio.run(server.run_tool('read_artifact', {'artifact_id': artifacts[0]['id']}, self.pid))
+        self.assertEqual(result['content'], 'Exact CLI artifact')
 
     def test_model_cell_uses_session_kernel_and_exports_exact_notebook(self):
         fid = self.frame()
