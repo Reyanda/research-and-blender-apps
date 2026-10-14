@@ -70,7 +70,7 @@ final class Host: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDel
                     let view = WKWebView(); view.navigationDelegate = self; view.uiDelegate = self; self.web = view
                     self.window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 760), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
                     self.window!.title = "OpenScience"; self.window!.contentView = view; self.window!.center()
-                    if self.uiTesting { self.window!.orderFront(nil) }
+                    if self.uiTesting { self.window!.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true) }
                     if !self.uiTesting { self.window!.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true) }
                     view.load(URLRequest(url: self.base))
                 }; return
@@ -264,5 +264,5 @@ final class Host: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDel
     func applicationWillTerminate(_ notification: Notification) { stop() }
 }
 let app = NSApplication.shared; let host = Host(); app.delegate = host
-app.setActivationPolicy(CommandLine.arguments.contains("--self-test") || CommandLine.arguments.contains("--ui-self-test") ? .prohibited : .regular)
+app.setActivationPolicy(CommandLine.arguments.contains("--self-test") ? .prohibited : .regular)
 app.run()
