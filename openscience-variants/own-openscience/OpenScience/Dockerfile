@@ -1,8 +1,8 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS analysis
 
 # Install system dependencies if any are needed
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+    curl r-base-core r-cran-jsonlite \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -10,7 +10,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+FROM analysis AS app
+COPY run.py .
+COPY src ./src
 
 EXPOSE 7070
 

@@ -16,6 +16,8 @@ jobs:
           cache: npm
       - run: pip install -r openscience-variants/own-openscience/OpenScience/requirements.txt
       - run: npm ci --ignore-scripts
+      - name: Build isolated analysis environment
+        run: docker build --target analysis -t openscience-python openscience-variants/own-openscience/OpenScience
       - name: Research app
         run: python3 -m unittest discover -s openscience-variants/own-openscience/OpenScience/tests -v
       - name: API adapter

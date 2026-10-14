@@ -11,3 +11,5 @@ Bun builtin sources retain upstream comments, with original copyright and licenc
 Original compiled runtime containers and the local pre-repair Git snapshot are excluded from this release. Recovery indices retain file hashes and original byte ranges for comparison with authorised inputs.
 
 The retained TCP Blender extension declares Apache-2.0 in its `blender_manifest.toml` and names Drexfy Tecnologies LTDA as maintainer. The desktop patch includes this extension in its application resources with its original source and manifest. GPL-3.0-or-later applies to the newly authored desktop host and daemon. Blender is installed separately and is not redistributed in this repository.
+
+The research workspace uses externally installed Python libraries. The MCP SDK, markdown-it-py and latex2mathml declare MIT; Paramiko declares LGPL-2.1; RDKit declares BSD-3-Clause; Modal declares Apache-2.0. Biopython retains its Biopython License Agreement. Their installed distribution metadata and licence files remain authoritative for their respective packages. These dependencies are installed from requirements.txt and are not copied into the native app bundle.

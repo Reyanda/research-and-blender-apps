@@ -1,10 +1,10 @@
 # Research and Blender apps
 
-A local research assistant, a Blender add-on, an API adapter and recovered application source.
+OpenScience implements research workflows from the retained Claude Science interfaces: independent sessions, source files, versioned analyses, Python and R kernels, scientific previews, agents, MCP connections and approved remote compute. This repository also contains the Blender bridge, API adapter and recovered source.
 
 | Component | Location | Use |
 |---|---|---|
-| OpenScience | `openscience-variants/own-openscience/OpenScience` | Local research chat and database tools |
+| OpenScience | `openscience-variants/own-openscience/OpenScience` | Research workspace and scientific analysis |
 | Blender add-on | `3d-agent/3d-agent-community/3d_agent` | Scene commands and optional LLM chat |
 | API adapter | `openscience-variants/extracted-claude-science/ClaudeScience-patched` | Translate Messages requests to DeepSeek |
 | Source extractor | `openscience-variants/extracted-claude-science/bun-decompiler` | Recover inert source with parser-validated boundaries |
@@ -12,12 +12,12 @@ A local research assistant, a Blender add-on, an API adapter and recovered appli
 
 ## Desktop app
 
-The `desktop` patch provides an authored macOS AppKit/WebKit host, Python daemon and HTTP bridge for the retained Blender extension. It uses the research UI with scene controls. Build and usage instructions are in [desktop/README.md](desktop/README.md).
+The `desktop` patch provides an authored macOS AppKit/WebKit host, Python daemon and HTTP bridge for the retained Blender extension. It hosts the research workspace and scene controls. Build and usage instructions are in [desktop/README.md](desktop/README.md).
 
 ```sh
 pip install -r openscience-variants/own-openscience/OpenScience/requirements.txt
 python3 desktop/build-app.py
-open "$HOME/Applications/Research and Blender.app"
+open "$HOME/Applications/OpenScience.app"
 ```
 
 Install Blender separately. The app uses an external Python 3.11+ runtime selected at build time; rebuild when moving to another computer. Opening Blender from the scene panel starts a fresh scene. Python scene commands require the permission checkbox.
@@ -35,7 +35,7 @@ export DEEPSEEK_API_KEY='your-key'
 python3 run.py
 ```
 
-Open http://127.0.0.1:8000. The app README documents provider settings and project storage. Python execution requires explicit Docker opt-in and runs in a restricted container.
+Open http://127.0.0.1:8000. The [app README](openscience-variants/own-openscience/OpenScience/README.md) documents the workflows, model settings and storage. Open the running app or server URL; the HTML file alone has no backend. Python and R use persistent restricted Docker kernels after explicit opt-in. Scientific previews include molecular structures, genomic intervals and Markdown equations; outputs retain source versions and execution metadata.
 
 ## Blender
 
@@ -81,7 +81,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 openscience-variants/extracted-claude-science/
 PYTHONDONTWRITEBYTECODE=1 python3 3d-agent/3d-agent-community/tests/test-addon.py
 ```
 
-Offline tests mock provider responses and require no API credits. Scene integration tests require an actual Blender installation. The macOS CI job builds the replacement, exercises its HTTP/TCP bridge with Blender, and tests research and scene interactions in WKWebView.
+Provider fixtures require no API credits. Owned MCP and SSH servers test real transports, and Docker integration tests analyze actual uploaded data. Modal uses SDK contract fixtures; no live account job was run. Scene integration tests require an actual Blender installation. The macOS CI job builds the replacement, exercises its HTTP/TCP bridge with Blender, and tests research and scene interactions in WKWebView.
 
 ## Licence
 

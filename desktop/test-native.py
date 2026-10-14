@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Test the installed host's actual backend lifecycle without a visible window."""
 import argparse, os, pathlib, plistlib, subprocess
-parser = argparse.ArgumentParser(); parser.add_argument('--app', default='~/Applications/Research and Blender.app'); args = parser.parse_args()
+parser = argparse.ArgumentParser(); parser.add_argument('--app', default='~/Applications/OpenScience.app'); args = parser.parse_args()
 app = pathlib.Path(args.app).expanduser(); info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
-assert info['CFBundleIdentifier'] == 'org.reyanda.research-and-blender'
+assert info['CFBundleIdentifier'] == 'org.reyanda.openscience'
 resources = app / 'Contents/Resources'
 assert not list(resources.rglob('.env'))
 assert 'api_key = ""' in next(resources.rglob('config.toml')).read_text()

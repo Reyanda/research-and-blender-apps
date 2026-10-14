@@ -13,6 +13,28 @@ from fastapi.testclient import TestClient
 
 
 class ServerTests(unittest.TestCase):
+    def test_provider_settings_save_credentials_without_returning_them(self):
+        with patch.object(server, 'API_KEY', ''), patch.object(server, 'DS_URL', 'https://example.invalid/v1'), patch.object(server, '_models', ['test-model']):
+            bad = self.client.put('/api/settings/provider', json={'base_url':'https://user:secret@example.org/v1', 'model':'m'})
+            self.assertEqual(bad.status_code, 400)
+            reply = self.client.put('/api/settings/provider', json={'base_url':'http://127.0.0.1:9999/v1', 'model':'local-model', 'api_key':'fixture-secret'})
+            self.assertEqual(reply.status_code, 200)
+            self.assertNotIn('fixture-secret', reply.text)
+            stored = server.DATA / 'config/provider.json'
+            self.assertEqual(stored.stat().st_mode & 0o777, 0o600)
+            self.assertNotIn('fixture-secret', stored.read_text())
+            from core.profiles import read_private
+            self.assertEqual(read_private(stored)['api_key'], 'fixture-secret')
+            self.assertEqual((stored.parent / 'vault.key').stat().st_mode & 0o777, 0o600)
+
+    def test_python_permission_revocation_shuts_owned_kernels(self):
+        with patch.dict(server.os.environ, {'OPENSCIENCE_ENABLE_PYTHON':'0'}), patch('core.kernels.shutdown_all', new_callable=AsyncMock) as cleanup:
+            response = self.client.put('/api/runtime/python', json={'enabled':True,'docker_context':'colima'})
+            self.assertTrue(response.json()['enabled'])
+            self.assertEqual(self.client.put('/api/runtime/python',json={'enabled':False,'docker_context':'bad/escape'}).status_code,400)
+            self.client.put('/api/runtime/python',json={'enabled':False,'docker_context':''})
+            cleanup.assert_awaited_once()
+
     def test_startup_does_not_wait_for_provider_discovery(self):
         async def check():
             gate = asyncio.Event()
@@ -74,6 +96,28 @@ class ServerTests(unittest.TestCase):
         self.assertTrue(response.text.endswith('data: {"t": "done"}\n\n'))
         with patch.object(server, "API_KEY", ""):
             self.assertEqual(self.client.post("/api/chat", json={"project_id": self.project["id"], "message": "hi"}).status_code, 503)
+
+    def test_blast_waiting_ready_and_failed_results_are_distinct(self):
+        import httpx
+        for rid, payload, expected in [('WAITING1234', 'Status=WAITING', 'waiting'),
+                                        ('READY12345', '{"BlastOutput2": [{"report": {"results": {"search": {"hits": []}}}}]}', 'ready'),
+                                        ('UNKNOWN123', 'Status=UNKNOWN', 'unknown')]:
+            server.BLAST_POLL_CACHE.clear()
+            client = AsyncMock()
+            client.__aenter__.return_value = client
+            client.get.return_value = httpx.Response(200, text=payload)
+            with patch.object(server.httpx, 'AsyncClient', return_value=client):
+                result = asyncio.run(server.run_tool('blast_result', {'rid': rid}, self.project['id']))
+                self.assertEqual(result['status'], expected)
+                self.assertEqual(client.get.call_args.kwargs['params'], {'CMD': 'Get', 'RID': rid, 'FORMAT_TYPE': 'JSON2_S'})
+                cached = asyncio.run(server.run_tool('blast_result', {'rid': rid}, self.project['id']))
+                self.assertTrue(cached['cached'])
+                self.assertEqual(client.get.call_count, 1)
+                if expected == 'ready':
+                    self.assertEqual(result['alignment']['BlastOutput2'][0]['report']['results']['search']['hits'], [])
+                else:
+                    self.assertNotIn('alignment', result)
+        server.BLAST_POLL_CACHE.clear()
 
     def test_python_requires_opt_in(self):
         with patch.dict(server.os.environ, {"OPENSCIENCE_ENABLE_PYTHON": "0"}), patch.object(server.asyncio, "create_subprocess_exec") as process:

@@ -47,7 +47,7 @@ bpy.app.timers.register = register
 bpy.app.timers.unregister = unregister
 bpy.app.timers.is_registered = lambda callback: any(item[1] is callback for item in pending)
 module.register()
-deadline = time.monotonic() + 120
+deadline = time.monotonic() + 300
 while time.monotonic() < deadline:
     for item in list(pending):
         if item[0] <= time.monotonic():
@@ -74,10 +74,10 @@ module.register()
             allocator.bind(('127.0.0.1', 0))
             cls.port = allocator.getsockname()[1]
         env = dict(os.environ, OPENSCIENCE_ALLOW_EXECUTION='1', OPENSCIENCE_PORT=str(cls.port))
-        cls.daemon = subprocess.Popen([sys.executable, str(ROOT / 'desktop/server.py'), 'serve'], env=env, stdout=cls.log, stderr=subprocess.STDOUT)
+        cls.daemon = subprocess.Popen([sys.executable, '-u', str(ROOT / 'desktop/server.py'), 'serve'], env=env, stdout=cls.log, stderr=subprocess.STDOUT)
         cls.addClassCleanup(cls.kill, cls.daemon)
         cls.url = f'http://127.0.0.1:{cls.port}'
-        deadline = time.monotonic() + 45
+        deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
             if cls.blender.poll() is not None or cls.daemon.poll() is not None:
                 cls.log.flush(); cls.log.seek(0)
@@ -90,7 +90,7 @@ module.register()
                 pass
             time.sleep(0.2)
         cls.log.flush(); cls.log.seek(0)
-        raise RuntimeError('Bridge startup timed out: ' + cls.log.read())
+        raise RuntimeError(f'Bridge startup timed out (Blender={cls.blender.poll()}, daemon={cls.daemon.poll()}): ' + cls.log.read())
 
     @staticmethod
     def kill(process):

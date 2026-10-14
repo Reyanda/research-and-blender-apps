@@ -5,3 +5,11 @@ numpy
 pandas
 matplotlib
 pydantic
+pypdf
+mcp>=2.0,<3
+paramiko>=3,<5
+markdown-it-py
+biopython
+rdkit
+latex2mathml
+modal>=1.6.1,<2

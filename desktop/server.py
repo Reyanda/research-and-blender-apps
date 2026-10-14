@@ -21,7 +21,7 @@ from core.server import app
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 MAX_BODY = 256 * 1024
 MAX_FRAME = 8 * 1024 * 1024
 TIMEOUT = 15.0
