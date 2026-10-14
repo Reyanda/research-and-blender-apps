@@ -28,13 +28,13 @@ dialog{color:var(--foreground);background:var(--card);border:1px solid var(--bor
 .review-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px}.review-stages .record{padding:8px 0}.review-stages strong{display:block}.review-stages small{color:var(--muted-foreground)}.review-stage-state{font-size:12px;color:var(--primary)}.review-run{width:100%;text-align:left;margin:4px 0}
 @media(max-width:800px){.settings-dialog[open]{grid-template-columns:155px minmax(0,1fr)}.settings-nav{padding:12px 6px}.content{padding:20px}.review-layout{grid-template-columns:1fr}.input-area{padding:10px 18px 18px}.composer-footer select{max-width:125px}.sidebar{padding:12px 6px}}
 
+.workspace-mode{display:flex;border:1px solid var(--border);border-radius:var(--control-radius);padding:3px;margin-bottom:18px;gap:3px}.sidebar .workspace-mode button{width:50%;text-align:center;border:0;margin:0;background:transparent}.workspace-mode button[aria-pressed=true]{background:var(--accent);font-weight:600}[data-science-nav][hidden],[data-code-nav][hidden]{display:none!important}
 </style>
 </head>
 <body>
 <div class="app">
-<aside class="sidebar"><div class="brand">OpenScience</div><button class="item" onclick="showModal()">＋ New project</button><button class="item" onclick="openWorkspaceSearch()">Search <small style="margin-left:auto">⌘K</small></button><button class="item" onclick="showSettings('skills')">Customize</button><button class="item" onclick="requireProjectView('files')">Files</button><button class="item" onclick="openReviewWorkflow()">Review workflow</button><button class="item" onclick="openCoding()">Coding agents</button><button class="item" onclick="openRepository()">Repository files</button><h2>Projects</h2><div id="projects"></div><h2 id="sessionsHeading" hidden>Active sessions</h2><div id="sessions"></div><button class="item" id="newSessionBtn" hidden onclick="newSession()">＋ New session</button><div class="sidebar-bottom"><button class="item" onclick="showConnections()">Scientific databases</button><button class="item" onclick="showSettings('general')">Settings</button><button class="item" id="blenderNav" onclick="showBlender()" style="display:none">Blender scene</button></div></aside>
+<aside class="sidebar"><div class="brand">OpenScience</div><div class="workspace-mode" role="group" aria-label="Workspace mode"><button id="scienceMode" aria-pressed="true" onclick="setWorkspaceMode('science').catch(report)">Science</button><button id="codeMode" aria-pressed="false" onclick="setWorkspaceMode('code').catch(report)">Code</button></div><button class="item" onclick="showModal()">＋ New project</button><button class="item" onclick="openWorkspaceSearch()">Search <small style="margin-left:auto">⌘K</small></button><button class="item" onclick="showSettings('skills')">Customize</button><button class="item" data-view="conversation" onclick="requireProjectView('conversation')">Conversation</button><button class="item" data-view="files" onclick="requireProjectView('files')">Files</button><button class="item" data-science-nav data-view="analysis" onclick="requireProjectView('analysis')">Analysis</button><button class="item" data-science-nav data-view="tools" onclick="requireProjectView('tools')">Science tools</button><button class="item" data-science-nav data-view="notes" onclick="requireProjectView('notes')">Notes</button><button class="item" data-science-nav data-view="review" onclick="requireProjectView('review')">Reviewer</button><button class="item" data-science-nav onclick="openReviewWorkflow()">Review workflow</button><button class="item" data-code-nav onclick="openRepository()">Repository files</button><h2>Projects</h2><div id="projects"></div><h2 id="sessionsHeading" hidden>Active sessions</h2><div id="sessions"></div><button class="item" id="newSessionBtn" hidden onclick="newSession()">＋ New session</button><div class="sidebar-bottom"><button class="item" onclick="showConnections()">Scientific databases</button><button class="item" onclick="showSettings('general')">Settings</button><button class="item" id="blenderNav" onclick="showBlender()" style="display:none">Blender scene</button></div></aside>
 <main class="main"><header class="header"><div class="header-title" id="title">OpenScience</div><div id="status">Checking connection</div></header>
-<nav id="workspaceTabs" class="workspace-tabs" aria-label="Open tabs"></nav><nav class="tabs" id="tabs" hidden><button data-view="conversation" onclick="showView('conversation')">Conversation</button><button data-view="analysis" onclick="showView('analysis')">Analysis</button><button data-view="files" onclick="showView('files')">Files &amp; results</button><button data-view="tools" onclick="showView('tools')">Science tools</button><button data-view="notes" onclick="showView('notes')">Notes</button><button data-view="review" onclick="showView('review')">Reviewer</button></nav>
 <p id="workspaceError" class="error" role="alert"></p>
 <div class="content">
 <section class="welcome" id="welcome"><h1>Research workspace</h1><p>Create a project to keep research sessions, source files, analyses and notes together.</p><p>Database searches and scientific tools can run directly. A model connection is required for conversations and proposed research plans.</p><button onclick="showModal()">Create project</button></section>
@@ -74,7 +74,7 @@ async function loadProjects(){
  for(const p of data.projects){const b=action(p.name,()=>selectProject(p.id));b.className='item';b.setAttribute('aria-current',p.id===currentProject);byId('projects').appendChild(b);}
 }
 async function selectProject(id){
- clearError();currentProject=id;project=await api('/api/projects/'+id);byId('title').textContent=project.name;byId('projectContext').value=project.context||'';byId('memoryEnabled').checked=project.memory_enabled===true;byId('tabs').hidden=false;byId('sessionsHeading').hidden=false;byId('newSessionBtn').hidden=false;byId('exportProject').href='/api/projects/'+id+'/export';
+ clearError();currentProject=id;project=await api('/api/projects/'+id);byId('title').textContent=project.name;byId('projectContext').value=project.context||'';byId('memoryEnabled').checked=project.memory_enabled===true;byId('sessionsHeading').hidden=false;byId('newSessionBtn').hidden=false;byId('exportProject').href='/api/projects/'+id+'/export';
  await loadProjects();await loadSessions();await showView('conversation');
 }
 async function loadSessions(){
@@ -90,7 +90,7 @@ async function showView(view){
  if(view==='compute'){await showSettings('infrastructure');if(currentProject)await loadCompute();return;}
  if(view==='context'){await showSettings('project');if(currentProject)await loadMemories();return;}
  if(currentProject)trackTab({key:"view:"+view,kind:"view",view,label:view});
- byId('title').textContent=project?.name||'OpenScience';byId('tabs').hidden=false;
+ byId('title').textContent=project?.name||'OpenScience';
  clearError();activeView=view;hidePanels();byId(view+'Panel').hidden=false;for(const button of document.querySelectorAll('[data-view]'))button.setAttribute('aria-current',button.dataset.view===view);
  byId('inputArea').style.display=view==='conversation'?'block':'none';
  if(view==='analysis'){if(activeFrame)await loadExecutions();else byId('executions').replaceChildren();}if(view==='conversation')await loadConversation();if(view==='files')await loadFiles();if(view==='notes')await loadNotes();if(view==='context')await loadMemories();if(view==='tools')await loadTools();if(view==='compute')await loadCompute();if(view==='review')await loadReview();
@@ -173,7 +173,7 @@ function editSkill(name){const s=skills.find(s=>s.name===name)||{};byId('skillNa
 async function saveSkill(){await api('/api/skills/catalog',{method:'POST',body:{name:byId('skillName').value,content:byId('skillContent').value,enabled:byId('skillEnabled').checked}});await loadProfiles();}
 async function deleteSkill(){const name=byId('skillSelect').value;if(name){await api('/api/skills/catalog/'+encodeURIComponent(name),{method:'DELETE'});await loadProfiles();editSkill('');}}
 async function originalShowSettings(){
- hidePanels();byId('tabs').hidden=true;byId('settingsPanel').hidden=false;byId('title').textContent='Settings';await loadProfiles();
+ hidePanels();byId('settingsPanel').hidden=false;byId('title').textContent='Settings';await loadProfiles();
  const [provider,runtime]=await Promise.all([api('/api/settings/provider'),api('/api/runtime/python')]);byId('providerUrl').value=provider.base_url;byId('providerModel').value=provider.model;byId('pythonEnabled').checked=runtime.enabled;byId('dockerContext').value=runtime.docker_context;byId('pythonState').textContent=runtime.docker_available?'Docker client installed. The selected engine and analysis image must be available.':'Install Docker and an analysis environment to run code.';
 }
 async function legacySaveProvider(){const p=await api('/api/settings/provider',{method:'PUT',body:{base_url:byId('providerUrl').value,model:byId('providerModel').value,api_key:byId('providerKey').value}});byId('providerKey').value='';byId('model').replaceChildren(new Option(p.model,p.model));byId('status').textContent=p.authenticated?'Model configured':'API key required for chat';}
@@ -237,7 +237,7 @@ async function createProject(){const name=byId('projName').value.trim();if(!name
         }
 
         async function showBlender() {
-            hidePanels(); byId('tabs').hidden = true;
+            hidePanels(); 
             document.getElementById('title').textContent = 'Blender scene';
             for (const id of ['inputArea']) document.getElementById(id).style.display = 'none';
             document.getElementById('blenderPanel').style.display = 'block';
@@ -330,11 +330,11 @@ loadProjects().catch(report);loadProfiles().catch(report);
 api('/api/models').then(data=>{for(const name of data.models)byId('model').add(new Option(name,name));}).catch(report);
 api('/api/status').then(data=>{byId('status').textContent=data.authenticated?'Model connected':'Model key required for chat';}).catch(report);
 
-let openTabs=JSON.parse(localStorage.getItem('science.open-tabs')||'[]'),selectedTab=null,providerProfiles=[],repositoryFile=null,repositoryHash=null;
-function trackTab(tab){if(!openTabs.some(t=>t.key===tab.key&&t.project_id===currentProject))openTabs.push({...tab,project_id:currentProject});selectedTab=tab.key;renderTabs();}
-function renderTabs(){const host=byId('workspaceTabs');host.replaceChildren();for(const tab of openTabs.filter(t=>!t.project_id||t.project_id===currentProject)){const row=element('div');row.className='workspace-tab';row.setAttribute('aria-selected',tab.key===selectedTab);row.append(action(tab.label,()=>activateTab(tab)));const close=action('×',()=>closeTab(tab.key));close.setAttribute('aria-label','Close '+tab.label);row.append(close);host.append(row);}localStorage.setItem('science.open-tabs',JSON.stringify(openTabs));}
-async function activateTab(tab){if(tab.kind==='file'){await showView('files');await openArtifact(tab.id);}else if(tab.kind==='coding')await openCoding();else if(tab.kind==='repository')await openRepository();else if(tab.kind==='review-workflow')await openReviewWorkflow();else if(tab.kind==='settings')await showSettings();else await showView(tab.view);selectedTab=tab.key;renderTabs();}
-async function closeTab(key){const active=key===selectedTab;openTabs=openTabs.filter(t=>t.key!==key||t.project_id!==currentProject);renderTabs();if(active){const next=openTabs.filter(t=>!t.project_id||t.project_id===currentProject).at(-1);if(next)await activateTab(next);else{hidePanels();byId('welcome').hidden=false;}}}
+let providerProfiles=[],repositoryFile=null,repositoryHash=null;
+function trackTab(){}
+function renderTabs(){localStorage.removeItem('science.open-tabs');}
+
+
 async function loadProviderProfiles(){const data=await api('/api/providers');providerProfiles=data.providers;const selected=byId('scienceProvider').value||data.default_id;byId('scienceProvider').replaceChildren();byId('providerProfile').replaceChildren(new Option('New provider',''));for(const p of providerProfiles){if(p.enabled)byId('scienceProvider').add(new Option(p.name+(p.transport==='local-cli'?' · CLI':''),p.id));byId('providerProfile').add(new Option(p.name+(p.installed===false?' · not installed':''),p.id));}byId('scienceProvider').value=selected;await selectScienceProvider();}
 async function selectScienceProvider(force=false){
  const id=byId('scienceProvider').value,p=providerProfiles.find(p=>p.id===id);if(!p)return;
@@ -354,7 +354,7 @@ function providerPreset(){const urls={openai:'https://api.openai.com/v1',anthrop
 async function defaultProvider(){await api('/api/providers/'+byId('providerProfile').value+'/default',{method:'PUT'});await loadProviderProfiles();}
 async function testProvider(){const value=await api('/api/providers/'+byId('providerProfile').value+'/test',{method:'POST'});byId('providerCheck').textContent=value.models.length+' models discovered';await loadProviderProfiles();}
 async function deleteProvider(){await api('/api/providers/'+byId('providerProfile').value,{method:'DELETE'});await loadProviderProfiles();}
-async function openCoding(settings=false){if(!settings){if(!currentProject){showModal();return;}await showView('conversation');byId('input').placeholder='Ask about code or research. Repository tools use this project’s permissions.';byId('input').focus();return;}if(settings){await showSettings('coding');const state=await api('/api/coding/runtime');byId('codingSettingsFrame').src=state.connected?state.settings_url:'about:blank';return;}hidePanels();byId('tabs').hidden=true;byId('codingPanel').hidden=false;trackTab({key:'coding',kind:'coding',label:'Coding'});const state=await api('/api/coding/runtime');byId('codingState').textContent=state.connected?'Connected to T3. Coding provider accounts and permissions use its settings.':'T3 is unavailable. Start the runtime or configure its address in Settings.';byId('codingExternal').href=state.url;byId('codingFrame').src=state.connected?(settings?state.settings_url:state.url):'about:blank';}
+async function openCoding(settings=false){if(!settings){await setWorkspaceMode('code');return;}if(settings){await showSettings('coding');const state=await api('/api/coding/runtime');byId('codingSettingsFrame').src=state.connected?state.settings_url:'about:blank';return;}hidePanels();byId('codingPanel').hidden=false;trackTab({key:'coding',kind:'coding',label:'Coding'});const state=await api('/api/coding/runtime');byId('codingState').textContent=state.connected?'Connected to T3. Coding provider accounts and permissions use its settings.':'T3 is unavailable. Start the runtime or configure its address in Settings.';byId('codingExternal').href=state.url;byId('codingFrame').src=state.connected?(settings?state.settings_url:state.url):'about:blank';}
 async function pairCoding(){const value=await api('/api/coding/runtime/pair',{method:'POST'});byId('codingFrame').src=value.pairing_url;byId('codingState').textContent='Pairing this browser with the local T3 runtime.';}
 async function startCoding(){await api('/api/coding/runtime/start',{method:'POST'});await openCoding();}
 async function openRepository(){if(!currentProject)throw new Error('Select a project first.');hidePanels();byId('repositoryPanel').hidden=false;trackTab({key:'repository',kind:'repository',label:'Repository'});const config=await api('/api/projects/'+currentProject+'/repository');byId('repositoryPath').value=config.repository?.path||'';byId('repositoryWrite').checked=config.repository?.write_enabled||false;if(config.repository)await loadRepository();}
@@ -450,6 +450,11 @@ async function ocrArtifact(){
  byId('previewInfo').textContent='Extracting PDF pages…';const value=await api('/api/projects/'+currentProject+'/artifacts/'+activeArtifact+'/ocr',{method:'POST',body:{version_id:activeVersion,first_page:Number(match[1]),last_page:Number(match[2])}});await loadFiles();await openArtifact(value.artifact.id);
 }
 
-setupUnifiedSettings();setupReferenceShell();byId('inputArea').style.display='block';renderTabs();api('/api/settings/workbench').then(applyAppearance).catch(report);loadProviderProfiles().catch(report);
+
+let workspaceMode=localStorage.getItem('science.workspace-mode')==='code'?'code':'science';
+function paintWorkspaceMode(){for(const mode of ['science','code'])byId(mode+'Mode').setAttribute('aria-pressed',workspaceMode===mode);for(const button of document.querySelectorAll('[data-science-nav]'))button.hidden=workspaceMode!=='science';for(const button of document.querySelectorAll('[data-code-nav]'))button.hidden=workspaceMode!=='code';byId('input').placeholder=workspaceMode==='code'?'Ask about code. Repository tools use this project’s permissions.':'Ask a research question';}
+async function setWorkspaceMode(mode){workspaceMode=mode==='code'?'code':'science';localStorage.setItem('science.workspace-mode',workspaceMode);paintWorkspaceMode();if(currentProject)await showView('conversation');else{hidePanels();byId('welcome').hidden=false;byId('inputArea').style.display='block';}byId('input').focus();}
+
+setupUnifiedSettings();setupReferenceShell();paintWorkspaceMode();byId('inputArea').style.display='block';renderTabs();api('/api/settings/workbench').then(applyAppearance).catch(report);loadProviderProfiles().catch(report);
 
 </script></body></html>
