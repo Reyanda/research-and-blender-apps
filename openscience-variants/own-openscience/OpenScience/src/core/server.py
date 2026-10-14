@@ -595,10 +595,11 @@ app.include_router(renderers_router)
 if __name__ == "__main__":
     run()
 
-from core import coding, providers, t3bridge
+from core import coding, providers, t3bridge, reviews
 app.include_router(coding.router)
 app.include_router(providers.router)
 app.include_router(t3bridge.router)
+app.include_router(reviews.router)
 
 @app.get('/tokens.css')
 async def design_tokens():
@@ -608,3 +609,4 @@ async def design_tokens():
 @app.on_event('shutdown')
 async def stop_coding_runtime():
     await t3bridge.shutdown()
+    await reviews.shutdown()

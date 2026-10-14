@@ -87,3 +87,12 @@ Repository files connect an existing absolute directory to a science project. Fi
 The token file derives from [T3 Code source commit 6c8fed35dded](https://github.com/pingdotgg/t3code/blob/6c8fed35dded/apps/web/src/index.css), matching installed version 0.0.45. It retains T3 semantic roles, light/dark colors, font stacks and control geometry, with Science layout aliases. The upstream MIT notice is included in tokens.css.
 
 Pending capabilities are listed in Settings → Capabilities: cross-runtime science/coding transcripts and tool handoff, scanned-PDF OCR, independent scientific verification with citation resolution and analysis reruns, incremental science token streaming, authenticated remote shared access, unified provider usage/billing, live Modal/Slurm account validation and complete signed-in Claude Science workflow comparison. The merged workspace does not claim these functions are complete.
+
+
+## Medantir review integration
+
+The Review workflow view connects to a separately built Medantir review engine through an authenticated local service. Select a review family, create a run, answer its clarification questions and save a run snapshot to project Files. The bridge preserves human verification and does not submit registrations.
+
+Set `OPENSCIENCE_MEDANTIR_ENGINE` to the absolute path of the engine’s built `dist/src/server.js` module before starting OpenScience. Node.js 22 or later is required. The default path uses the local SWE Medantir checkout. This integration does not include or redistribute the engine.
+
+The workspace includes a settings dialog, a searchable provider/model picker and workspace search on Command/Ctrl+K. Network grants, cloud storage, combined billing and complete Claude Science parity remain pending.
