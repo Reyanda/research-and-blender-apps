@@ -62,7 +62,7 @@ New model, MCP and compute configuration is encrypted locally. The encryption ke
 
 ## Scientific boundaries
 
-The reviewer detects integrity and provenance defects and can retain model commentary. It does not establish scientific correctness, resolve every citation, or rerun an analysis. Structural previews show coordinates and sequences contained in uploaded files; they do not predict structures.
+The reviewer detects integrity and provenance defects and can retain model commentary. Bibliography verification uses the installed maintained citation verifier to check supplied titles, authors and stable identifiers against registries. Recorded Python/R cells can be replayed in a fresh isolated session, with output comparisons saved as artifacts. These checks do not establish scientific correctness or claim support. Structural previews show coordinates and sequences contained in uploaded files; they do not predict structures.
 
 AlphaFold retrieves existing structures. The ESM Atlas tool uses an external folding service. BLAST submits a search and retrieves its alignment through a separate result request; pending jobs retain their waiting state. Database adapters can require credentials or become unavailable. Unreadable or scanned PDFs are reported without claiming text extraction. Scientific previews are bounded. Chemical drawings use source bonds through RDKit; SMILES entry saves a drawing and its molecular identity. BED and GFF intervals retain their source coordinates alongside the display axis. Markdown equations use MathML.
 
@@ -78,7 +78,7 @@ The BLAST result request uses [NCBI's documented retrieval API](https://blast.nc
 
 ## Coding workspace and shared settings
 
-Install T3 Code and start its local runtime, or use Coding agents → Start local T3 runtime. Pair coding workspace creates a short-lived local T3 pairing link for the embedded client. The coding interface runs from the installed T3 runtime; its accounts, terminals, Git operations, model selection and permissions retain T3 behavior. No T3 executable is redistributed.
+Coding agents opens the shared research composer. Codex, Claude Code, Grok Build and OpenCode adapters use installed CLI accounts, one application transcript and the same restricted scientific and repository tools. API model lists are discovered automatically and displayed in the composer dropdown. Installed T3 account controls remain available inside Settings. Existing standalone T3 conversations remain separate; no T3 executable is redistributed.
 
 Settings groups API providers, coding accounts, infrastructure, agents and skills, connections, appearance and capabilities. Science API profiles support OpenAI, Anthropic Messages, DeepSeek, OpenRouter, Gemini through its compatible endpoint, Ollama and custom compatible endpoints. Keys are encrypted in local configuration and omitted from API responses. Model discovery tests connection contracts; it does not perform paid inference.
 
@@ -86,7 +86,7 @@ Repository files connect an existing absolute directory to a science project. Fi
 
 The token file derives from [T3 Code source commit 6c8fed35dded](https://github.com/pingdotgg/t3code/blob/6c8fed35dded/apps/web/src/index.css), matching installed version 0.0.45. It retains T3 semantic roles, light/dark colors, font stacks and control geometry, with Science layout aliases. The upstream MIT notice is included in tokens.css.
 
-Pending capabilities are listed in Settings → Capabilities: cross-runtime science/coding transcripts and tool handoff, scanned-PDF OCR, independent scientific verification with citation resolution and analysis reruns, incremental science token streaming, authenticated remote shared access, unified provider usage/billing, live Modal/Slurm account validation and complete signed-in Claude Science workflow comparison. The merged workspace does not claim these functions are complete.
+Settings → Capabilities records the available functions and remaining limitations. API responses stream incrementally; CLI responses remain buffered. Provider token usage is retained with session receipts; external invoice totals and account limits are not inferred. PDF OCR requires Poppler and Tesseract and retains source versions, page numbers, word boxes and confidence scores. Authenticated remote shared access, live Modal/Slurm account validation and complete signed-in Claude Science workflow comparison remain unverified.
 
 
 ## Medantir review integration

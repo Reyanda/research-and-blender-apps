@@ -129,6 +129,9 @@ async def llm_chat(messages, tools=None, model=None, stream=False):
 BLAST_POLL_CACHE = {}
 
 TOOLS = [
+    {"name": "repository_read", "description": "Read a UTF-8 file from this project's configured repository with its SHA", "parameters": {"path": "Relative file path"}},
+    {"name": "repository_write", "description": "Edit an existing repository file; requires enabled write permission and exact SHA from read", "parameters": {"path": "Relative file path", "content": "Replacement UTF-8 text", "previous_sha256": "SHA returned by repository_read"}},
+    {"name": "repository_git", "description": "Inspect project repository Git status and diffs", "parameters": {}},
     {"name": "search_mcp", "description": "Search any scientific database. Available: " + ", ".join(sorted(SEARCH_CONNECTORS)),
      "parameters": {"connector": "Database ID", "query": "Search query", "max_results": "Max results (optional)"}},
     {"name": "run_python", "description": "Execute Python code in sandbox", "parameters": {"code": "Python code"}},
@@ -146,6 +149,20 @@ async def run_tool(name, args, pid):
     validate_pid(pid)
     if not isinstance(args, dict):
         return {"error": "Tool arguments must be an object"}
+    if name.startswith('repository_'):
+        from . import coding, workspace
+        if name == 'repository_read':
+            return await coding.read_file(pid, args.get('path'))
+        if name == 'repository_git':
+            return await coding.git_status(pid)
+        if name == 'repository_write':
+            previous = args.get('previous_sha256')
+            if not isinstance(previous, str) or not re.fullmatch('[a-f0-9]{64}', previous):
+                raise HTTPException(400, 'Repository write requires the SHA from repository_read')
+            content = workspace.text(args.get('content'), 'File content', coding.MAX_TEXT_BYTES, empty=True).encode()
+            async with workspace._lock:
+                root, _ = coding.configured(pid, write=True)
+                return coding.write_bytes(root, args.get('path'), content, previous, require_existing=True)
     if name == "search_mcp":
         return await mcp_search(args.get("connector",""), args.get("query",""), args)
     from core.sessions import ACTIVE_FRAME, execute_tool_cell
@@ -335,6 +352,7 @@ async def converse(pid, message, model=None, extra_system=None):
             return {"response": r["error"], "tool_results": []}
         if active and r.get('model'):
             active['provider_model'] = r['model']
+        from .events import emit
         tc = r.get("tool_calls")
         if not tc:
             add_msg(proj, "assistant", r["content"]); save_proj(pid, proj)
@@ -348,6 +366,7 @@ async def converse(pid, message, model=None, extra_system=None):
         proj["messages"].append(am)
         trs = []
         for t in tc:
+            emit("tool_started", name=t["name"], call_id=t["id"])
             try:
                 if t["name"] not in {tool["name"] for tool in allowed_tools}:
                     raise ValueError("Tool is excluded by selected agent")
@@ -600,6 +619,10 @@ app.include_router(coding.router)
 app.include_router(providers.router)
 app.include_router(t3bridge.router)
 app.include_router(reviews.router)
+from . import events
+app.include_router(events.router)
+from . import ocr
+app.include_router(ocr.router)
 
 @app.get('/tokens.css')
 async def design_tokens():

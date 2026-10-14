@@ -122,3 +122,80 @@ def schedule(fid):
     _tasks[fid] = task
     # Retrieve exceptions even when no caller awaits the optional background review.
     task.add_done_callback(lambda t: None if t.cancelled() else t.exception())
+
+
+class CitationRequest(BaseModel):
+    artifact_id: str
+    version_id: str | None = None
+
+@router.post('/api/frames/{fid}/verify-citations')
+async def verify_citations(fid: str, req: CitationRequest):
+    """Run the maintained identity verifier on explicit bibliography records."""
+    import importlib.util
+    from pathlib import Path
+    frame = sessions.find(fid)
+    project = workspace.project(frame['project_id'])
+    artifact = next((a for a in project['artifacts'] if a['id'] == req.artifact_id), None)
+    if artifact is None:
+        raise HTTPException(404, 'Bibliography artifact not found')
+    vid = req.version_id or artifact['current_version_id']
+    content = workspace.artifact_path(project['id'], artifact['id'], vid).read_bytes()
+    try:
+        value = json.loads(content)
+        citations = value.get('citations') if isinstance(value, dict) else value
+        if not isinstance(citations, list) or not 1 <= len(citations) <= 30:
+            raise ValueError()
+        if any(not isinstance(c, dict) or not c.get('title') or not (c.get('authors') or c.get('author')) for c in citations):
+            raise ValueError()
+    except (ValueError, TypeError):
+        raise HTTPException(400, 'Supply one to thirty JSON citation records with title and authors; no identifiers are inferred')
+    engine = Path.home() / '.codex/skills/citation-verification/scripts/verify_citations.py'
+    if not engine.is_file():
+        raise HTTPException(503, 'The maintained citation verifier is unavailable')
+    spec = importlib.util.spec_from_file_location('maintained_citation_verifier', engine)
+    verifier = importlib.util.module_from_spec(spec); spec.loader.exec_module(verifier)
+    results = []
+    for citation in citations:
+        result = await asyncio.to_thread(verifier.verify_one, citation)
+        results.append({'input': citation, 'result': result})
+    record = {'criterion': 'citation_identity', 'created_at': workspace.now(),
+              'source_artifact_id': artifact['id'], 'source_version_id': vid,
+              'source_sha256': hashlib.sha256(content).hexdigest(),
+              'verifier_sha256': hashlib.sha256(engine.read_bytes()).hexdigest(),
+              'results': results, 'all_passed': all(r['result']['status'] == 'pass' for r in results),
+              'claim_support': 'not_established'}
+    saved = await workspace.save_artifact(project['id'], 'citation-verification.json', json.dumps(record).encode(), 'application/json', {'origin': 'reviewer', 'frame_id': fid, 'criterion': 'citation_identity'})
+    return {**record, 'artifact_id': saved['id']}
+
+
+@router.post('/api/frames/{fid}/reproduce')
+async def reproduce(fid: str):
+    """Re-run recorded cells in a new isolated session; compare observable outputs."""
+    from . import kernels
+    source = sessions.find(fid)
+    if source.get('status') == 'running':
+        raise HTTPException(409, 'Wait for the source session to finish')
+    cells = source.get('executions', [])
+    if not cells or len(cells) > 30:
+        raise HTTPException(400, 'Reproduction requires one to thirty recorded cells')
+    before = hashlib.sha256(json.dumps(cells, sort_keys=True).encode()).hexdigest()
+    replay = await sessions.create(sessions.NewFrame(project_id=source['project_id'], name='Reproduction: ' + source['name'][:150]))
+    results = []
+    try:
+        for cell in cells:
+            result = await sessions.execute_tool_cell(replay, cell['code'], cell['language'])
+            expected = cell.get('result', {})
+            fields = ('success', 'stdout', 'stderr')
+            match = all(result.get(k) == expected.get(k) for k in fields)
+            results.append({'source_execution_id': cell['id'], 'replay_execution_id': replay['executions'][-1]['id'], 'matched': match,
+                            'expected': {k: expected.get(k) for k in fields}, 'observed': {k: result.get(k) for k in fields},
+                            'code_sha256': hashlib.sha256(cell['code'].encode()).hexdigest(), 'docker_image_id': result.get('docker_image_id')})
+        replay['status'] = 'completed'; sessions.write(replay)
+    finally:
+        await kernels.interrupt(replay['id'])
+    record = {'criterion': 'fresh_kernel_reproduction', 'source_frame_id': fid, 'replay_frame_id': replay['id'],
+              'source_executions_sha256': before, 'created_at': workspace.now(), 'results': results,
+              'all_matched': all(r['matched'] for r in results), 'scientific_correctness': 'not_established',
+              'extent': 'Compares stdout, stderr and execution success. Scientific methods and generated file bytes require separate review.'}
+    saved = await workspace.save_artifact(source['project_id'], 'reproduction-'+fid+'.json', json.dumps(record).encode(), 'application/json', {'origin': 'reviewer', 'frame_id': fid, 'criterion': record['criterion']})
+    return {**record, 'artifact_id': saved['id']}

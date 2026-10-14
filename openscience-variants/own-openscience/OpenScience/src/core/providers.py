@@ -19,7 +19,7 @@ PRESETS = {
     'ollama': 'http://127.0.0.1:11434/v1',
     'anthropic': 'https://api.anthropic.com/v1',
 }
-CLI = {'opencode-cli': ('OpenCode', 'opencode'), 'grok-cli': ('Grok Build', 'grok')}
+CLI = {'codex-cli': ('Codex', 'codex'), 'claude-cli': ('Claude Code', 'claude'), 'opencode-cli': ('OpenCode', 'opencode'), 'grok-cli': ('Grok Build', 'grok')}
 
 def cli_profiles():
     cached = load().get('cli_models', {})
@@ -71,7 +71,7 @@ class Provider(BaseModel):
     kind: str = 'custom'
     base_url: str | None = None
     api_key: str = Field(default='', max_length=10000)
-    model: str = Field(min_length=1, max_length=200)
+    model: str = Field(default='', max_length=200)
     models: list[str] = Field(default_factory=list, max_length=1000)
     enabled: bool = True
 
@@ -91,7 +91,7 @@ def normalize(value):
     url = urlsplit(value['base_url'])
     if url.scheme not in ('http', 'https') or not url.hostname or url.username or url.password or url.query or url.fragment:
         raise HTTPException(400, 'Provider requires an HTTP URL without embedded credentials')
-    value['models'] = list(dict.fromkeys([value['model'], *value['models']]))
+    value['models'] = list(dict.fromkeys(v for v in [value['model'], *value['models']] if v))
     return value
 
 @router.get('/api/providers')
@@ -145,6 +145,19 @@ def headers(profile):
 
 async def discover(identifier):
     profile = selected(identifier)
+    if profile['kind'] == 'codex-cli':
+        from pathlib import Path
+        cache = Path.home() / '.codex/models_cache.json'
+        values = json.loads(cache.read_text()).get('models', []) if cache.exists() else []
+        found = [v['slug'] for v in values if isinstance(v, dict) and v.get('slug')]
+        if not found:
+            found = ['CLI default']
+        data = load(); data.setdefault('cli_models', {})[identifier] = found; save(data)
+        return {'models': found, 'provider_id': identifier}
+    if profile['kind'] == 'claude-cli':
+        found = ['CLI default', 'opus', 'sonnet', 'haiku']
+        data = load(); data.setdefault('cli_models', {})[identifier] = found; save(data)
+        return {'models': found, 'provider_id': identifier, 'basis': 'CLI model aliases; account access is checked on request'}
     if profile['kind'] in CLI:
         command = [shutil.which(CLI[profile['kind']][1]), 'models']
         output = await cli_process(command, '', timeout=30)
@@ -165,7 +178,12 @@ async def discover(identifier):
         found = [v['id'] for v in result.json()['data'] if isinstance(v.get('id'), str)]
         if not found:
             raise HTTPException(502, 'Provider returned no model identifiers')
-        data = load(); data['profiles'][profile['id']]['models'] = list(dict.fromkeys([profile['model'], *found])); save(data)
+        data = load()
+        stored = data['profiles'][profile['id']]
+        stored['models'] = list(dict.fromkeys(found))
+        if not stored.get('model'):
+            stored['model'] = found[0]
+        save(data)
         return {'models': found, 'provider_id': profile['id']}
     except HTTPException:
         raise
@@ -226,7 +244,7 @@ async def cli_process(command, prompt, timeout=300, env=None):
 
 def cli_response(output, kind, tools, model):
     usage = {}
-    if kind == 'opencode-cli':
+    if kind in ('opencode-cli', 'codex-cli'):
         parts = []
         for line in output.splitlines():
             try:
@@ -235,13 +253,21 @@ def cli_response(output, kind, tools, model):
                 continue
             if event.get('type') == 'error':
                 raise HTTPException(502, 'OpenCode rejected the request; check model access and quota')
+            if event.get('type') == 'turn.completed':
+                usage = event.get('usage', {})
+            if event.get('type') == 'turn.failed':
+                raise HTTPException(502, 'Codex rejected the request')
+            if event.get('type') == 'item.completed' and event.get('item', {}).get('type') == 'agent_message':
+                parts.append(event['item'].get('text', ''))
             if event.get('type') == 'text':
                 parts.append(event.get('part', {}).get('text', ''))
         text = ''.join(parts)
     else:
         try:
             body = json.loads(output)
-            text, usage = body['text'], body.get('usage', {})
+            text, usage = body.get('result') if kind == 'claude-cli' else body['text'], body.get('usage', {})
+            if body.get('is_error'):
+                raise HTTPException(502, 'CLI provider rejected the request')
         except (ValueError, KeyError, TypeError):
             raise HTTPException(502, 'Grok returned an invalid response')
     text = text.strip()
@@ -277,14 +303,27 @@ async def cli_chat(profile, messages, tools, model):
     if not executable:
         raise HTTPException(503, 'Selected CLI is no longer installed')
     env = dict(os.environ)
-    if profile['kind'] == 'opencode-cli':
+    if profile['kind'] == 'codex-cli':
+        command = [executable, 'exec', '--json', '--skip-git-repo-check', '--sandbox', 'read-only', '-c', 'features.shell_tool=false', '-c', 'features.unified_exec=false', '-c', 'web_search="disabled"', '-c', 'mcp_servers={}', '-']
+    elif profile['kind'] == 'claude-cli':
+        command = [executable, '--print', '--bare', '--output-format', 'json', '--tools', '', '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--setting-sources', '']
+    elif profile['kind'] == 'opencode-cli':
         command = [executable, 'run', '--pure', '--format', 'json']
         # Explicit denials prevent CLI tools from bypassing host research approvals.
         env['OPENCODE_CONFIG_CONTENT'] = json.dumps({'permission': {'*': 'deny'}})
     else:
         command = [executable, '--prompt-file', '/dev/stdin', '--tools', '', '--disable-web-search',
                    '--no-subagents', '--max-turns', '1', '--output-format', 'json', '--permission-mode', 'plan']
-    if model:
+    if profile['kind'] == 'codex-cli':
+        import tomllib, re
+        from pathlib import Path
+        config_path = Path.home() / '.codex/config.toml'
+        config = tomllib.loads(config_path.read_text()) if config_path.exists() else {}
+        for name in config.get('mcp_servers', {}):
+            if not re.fullmatch(r'[A-Za-z0-9_-]+', name):
+                raise HTTPException(503, 'Codex MCP configuration cannot be isolated safely')
+            command += ['-c', 'mcp_servers.' + name + '.enabled=false']
+    if model and model != 'CLI default':
         if model.startswith('-') or len(model) > 200:
             raise HTTPException(400, 'Invalid CLI model identifier')
         command += ['--model', model]
@@ -315,7 +354,7 @@ def anthropic_messages(messages):
             history.append({'role': role, 'content': blocks})
     return '\n\n'.join(system), history
 
-async def chat(messages, tools=None, model=None, provider_id=None):
+async def _chat(messages, tools=None, model=None, provider_id=None):
     profile = selected(provider_id)
     chosen = model or profile['model']
     if profile['kind'] in CLI:
@@ -334,6 +373,10 @@ async def chat(messages, tools=None, model=None, provider_id=None):
             if tools: payload['tools'] = [{'type': 'function', 'function': {'name': t['name'], 'description': t.get('description', ''), 'parameters': schema(t)}} for t in tools]
             endpoint = '/chat/completions'
         async with http_client() as client:
+            from .events import SINK
+            if SINK.get() is not None:
+                from .streaming import response as stream_response
+                return await stream_response(client, profile['base_url'] + endpoint, headers(profile), payload, profile['kind'] == 'anthropic')
             response = await client.post(profile['base_url'] + endpoint, headers=headers(profile), json=payload, timeout=300)
         if response.status_code != 200:
             raise HTTPException(502, f'Model provider returned HTTP {response.status_code}')
@@ -350,3 +393,16 @@ async def chat(messages, tools=None, model=None, provider_id=None):
         raise
     except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError):
         raise HTTPException(502, 'Model provider returned an invalid or unavailable response')
+
+
+async def chat(messages, tools=None, model=None, provider_id=None):
+    from .events import emit
+    profile = selected(provider_id)
+    if profile['kind'] in CLI:
+        emit('provider_mode', mode='buffered_cli', provider_id=profile['id'])
+    result = await _chat(messages, tools, model, provider_id)
+    from .events import record
+    record(profile, result)
+    if profile['kind'] in CLI and result.get('content'):
+        emit('text_delta', text=result['content'])
+    return result

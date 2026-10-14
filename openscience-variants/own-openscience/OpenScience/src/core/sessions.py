@@ -365,3 +365,41 @@ async def execute(fid: str, req: Cell):
 @router.get('/api/frames/{fid}/executions')
 async def executions(fid: str):
     return {'executions': find(fid)['executions']}
+
+
+@router.post('/api/frames/{fid}/stream')
+async def stream_message(fid: str, req: Message):
+    from fastapi.responses import StreamingResponse
+    from .events import SINK
+    frame = find(fid)
+    if frame['status'] == 'awaiting_approval':
+        raise HTTPException(409, 'Approve or discard the pending plan first')
+    if fid in _tasks:
+        raise HTTPException(409, 'Session already running')
+    async def generate():
+        queue = asyncio.Queue()
+        async def run():
+            token = SINK.set(queue)
+            try:
+                result = await start(frame, req)
+                await queue.put({'type': 'completed', 'result': result})
+            except Exception as error:
+                await queue.put({'type': 'error', 'message': error.detail if isinstance(error, HTTPException) else 'Research operation failed'})
+            finally:
+                SINK.reset(token)
+        task = asyncio.create_task(run())
+        try:
+            while True:
+                try:
+                    event = await asyncio.wait_for(queue.get(), 15)
+                except asyncio.TimeoutError:
+                    yield ': keepalive\n\n'
+                    continue
+                yield 'data: ' + json.dumps(event) + '\n\n'
+                if event['type'] in ('completed', 'error'):
+                    break
+        finally:
+            if not task.done():
+                task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+    return StreamingResponse(generate(), media_type='text/event-stream')
