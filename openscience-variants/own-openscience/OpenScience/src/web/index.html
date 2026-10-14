@@ -237,7 +237,7 @@ async function createProject(){const name=byId('projName').value.trim();if(!name
         }
 
         async function showBlender() {
-            hidePanels(); 
+            hidePanels();
             document.getElementById('title').textContent = 'Blender scene';
             for (const id of ['inputArea']) document.getElementById(id).style.display = 'none';
             document.getElementById('blenderPanel').style.display = 'block';
@@ -410,7 +410,7 @@ function setupReferenceShell(){
  group('general').append(element('h2','OpenScience'),element('p','Local science and coding workspace. API profiles and installed CLI providers are configured under Credentials and providers.'),action('Choose default provider',()=>settingsSection('providers')),action('Documentation',()=>window.open('https://claude.com/docs/claude-science/overview','_blank','noopener')));
  group('connections').append(action('Open MCP connection manager',()=>{closeSettings();showConnections().catch(report);}));
  for(const [id,label,run] of [['infrastructure','SSH, Slurm and Modal settings',()=>requireProjectView('compute')],['infrastructure','Repository directory and permissions',()=>openRepository()],['connections','MCP and scientific databases',()=>showConnections()],['coding','Configure coding providers',()=>openCoding(true)]]){const b=Array.from(group(id).querySelectorAll('button')).find(b=>b.textContent===label);if(b)b.onclick=()=>{closeSettings();Promise.resolve(run()).catch(report);};}
- 
+
  for(const [panel,category] of [['computePanel','infrastructure'],['connectionsPanel','connections'],['contextPanel','project']]){group(category).append(byId(panel));byId(panel).hidden=false;}
  const codingSettings=element('iframe');codingSettings.id='codingSettingsFrame';codingSettings.className='coding-frame';codingSettings.title='Coding account settings';group('coding').append(codingSettings);
  const options=document.querySelector('.session-options');group('agents').prepend(options);options.open=true;
