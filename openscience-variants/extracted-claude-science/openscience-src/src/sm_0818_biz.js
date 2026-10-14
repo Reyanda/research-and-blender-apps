@@ -1,0 +1,1 @@
+var mqO=S(()=>{hiz()});var biz=(O)=>new uqO(O);

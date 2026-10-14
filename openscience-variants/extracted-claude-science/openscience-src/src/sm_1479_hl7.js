@@ -1,0 +1,1 @@
+var Tl7=S(()=>{g0();fy_();IZ();jy_();EhO=wt(lBG)});function hl7(O,z,w,W,G){let x={sent_at:new Date(WV()).toISOString()};if(w?.sdk)x.sdk={name:w.sdk.name,version:w.sdk.version};if(!!W&&!!G)x.dsn=xV(G);if(z)x.trace=z;let Y=iBG(O);return F0(x,[Y])}function iBG(O){return[{type:"check_in"},O]}

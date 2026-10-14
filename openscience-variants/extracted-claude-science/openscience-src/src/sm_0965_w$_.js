@@ -1,0 +1,1 @@
+var jez=S(()=>{Lez();pQO()});

@@ -1,0 +1,1 @@
+var BsO=S(()=>{iB();rJ();L9w=/^[a-z][a-z0-9_]{0,63}$/;SsO=new Map});function RQ_(){return $9w}var IsO,jo_=100,$o_=10,RsO=43200,AO_=1e4,jm=259200,_Q=600,DsO=60,$9w;

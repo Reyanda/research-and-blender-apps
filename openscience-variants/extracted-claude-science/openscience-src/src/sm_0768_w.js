@@ -1,0 +1,4 @@
+var Cx_=S(()=>{TL_();M5O();Q5O();Nfz();Efz();Afz()});var Bfz,PQW="169.254.170.2",bQW="169.254.170.23",fQW="[fd00:ec2::23]",Ifz=(O,z)=>{if(O.protocol==="https:")return;if(O.hostname===PQW||O.hostname===bQW||O.hostname===fQW)return;if(O.hostname.includes("[")){if(O.hostname==="[::1]"||O.hostname==="[0000:0000:0000:0000:0000:0000:0000:0001]")return}else{if(O.hostname==="localhost")return;let w=O.hostname.split("."),W=(G)=>{let x=parseInt(G,10);return 0<=x&&x<=255};if(w[0]==="127"&&W(w[1])&&W(w[2])&&W(w[3])&&w.length===4)return}throw new Bfz.CredentialsProviderError(`URL not accepted. It must either be HTTPS or match one of the following:
+  - loopback CIDR 127.0.0.0/8 or [::1/128]
+  - ECS container host 169.254.170.2
+  - EKS container host 169.254.170.23 or [fd00:ec2::23]`,{logger:z})};

@@ -1,0 +1,1 @@
+var BMO=S(()=>{eG7()});function z37(O={}){let z=XH_(O.userAgentPrefix);return{name:BIW,async sendRequest(w,W){if(!w.headers.has(O37))w.headers.set(O37,await z);return W(w)}}}var O37,BIW="userAgentPolicy";

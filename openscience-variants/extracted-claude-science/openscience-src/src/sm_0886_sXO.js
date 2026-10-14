@@ -1,0 +1,1 @@
+var iXO=S(()=>{IO();BO();Caz=W_(SO(),1),gaz=W_(QO(),1);dXO=class dXO extends gaz.Command.classBuilder().ep({...m_,Bucket:{type:"contextParams",name:"Bucket"}}).m(function(O,z,w,W){return[Caz.getEndpointPlugin(w,O.getEndpointParameterInstructions())]}).s("AmazonS3","GetObjectTorrent",{}).n("S3Client","GetObjectTorrentCommand").sc(Ybz).build(){}});var vaz,Faz,nXO;

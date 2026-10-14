@@ -1,0 +1,1 @@
+var J8O=S(()=>{N8O()});var lEz=(O)=>{let z=O.lastIndexOf("-");if(z!==-1){let w=O.slice(z+1);if(!w.startsWith("0")){let W=parseInt(w,10);if(!isNaN(W)&&W>=1&&W<=1e4)return!0}}return!1};var pEz=async(O,{checksumAlgorithmFn:z,base64Encoder:w})=>w(await qF_(z,O));

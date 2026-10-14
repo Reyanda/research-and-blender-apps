@@ -1,0 +1,1 @@
+var Pez=S(()=>{/*! @azure/msal-common v16.7.0 2026-06-05 */});function bez(O){if(!(O instanceof Error))return new J1_(hez);if(O.name==="QuotaExceededError"||O.name==="NS_ERROR_DOM_QUOTA_REACHED"||O.message.includes("exceeded the quota"))return new J1_(Tez);else return new J1_(O.name,O.message)}var J1_;

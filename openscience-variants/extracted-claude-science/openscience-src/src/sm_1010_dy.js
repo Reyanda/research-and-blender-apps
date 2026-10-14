@@ -1,0 +1,1 @@
+var S1_=S(()=>{/*! @azure/msal-common v16.7.0 2026-06-05 */oy={HOME_ACCOUNT_ID:"home_account_id",UPN:"UPN"}});async function dy(O,z,w){if(typeof O==="string")return O;else return O({clientId:z,tokenEndpoint:w})}

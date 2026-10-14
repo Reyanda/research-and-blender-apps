@@ -1,0 +1,1 @@
+var cZO=S(()=>{jz();IO();BO();Vsz=W_(SO(),1),Nsz=W_(QO(),1);mZO=class mZO extends Nsz.Command.classBuilder().ep({...m_,Bucket:{type:"contextParams",name:"Bucket"}}).m(function(O,z,w,W){return[Vsz.getEndpointPlugin(w,O.getEndpointParameterInstructions()),kO(w)]}).s("AmazonS3","GetBucketAbac",{}).n("S3Client","GetBucketAbacCommand").sc(BPz).build(){}});var Msz,ksz,lZO;

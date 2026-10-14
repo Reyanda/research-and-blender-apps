@@ -1,0 +1,1 @@
+var eIO=S(()=>{kh_();SG();rK()});async function Qh7(O,z,w){if(!O3(O))throw new fW("General JWS must be an object");if(!Array.isArray(O.signatures)||!O.signatures.every(O3))throw new fW("JWS Signatures missing or incorrect type");for(let W of O.signatures)try{return await ea({header:W.header,payload:O.payload,protected:W.protected,signature:W.signature},z,w)}catch{}throw new la}

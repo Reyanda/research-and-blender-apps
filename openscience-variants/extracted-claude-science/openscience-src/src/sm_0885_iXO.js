@@ -1,0 +1,1 @@
+var oXO=S(()=>{jz();IO();BO();Uaz=W_(SO(),1),Jaz=W_(QO(),1);pXO=class pXO extends Jaz.Command.classBuilder().ep({...m_,Bucket:{type:"contextParams",name:"Bucket"}}).m(function(O,z,w,W){return[Uaz.getEndpointPlugin(w,O.getEndpointParameterInstructions()),kO(w)]}).s("AmazonS3","GetObjectTagging",{}).n("S3Client","GetObjectTaggingCommand").sc(xbz).build(){}});var Caz,gaz,dXO;

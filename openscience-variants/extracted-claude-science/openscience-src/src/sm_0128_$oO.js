@@ -1,0 +1,5 @@
+var F__=S(()=>{v__=Symbol("anthropic.sdk.stainlessHelper")});function $oO(O){return O.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g,encodeURIComponent)}var joO,PWw=(O=$oO)=>function(w,...W){if(w.length===1)return w[0];let G=!1,x=[],Y=w.reduce((Z,X,Q)=>{if(/[?#]/.test(X))G=!0;let V=W[Q],N=(G?encodeURIComponent:O)(""+V);if(Q!==W.length&&(V==null||typeof V==="object"&&V.toString===Object.getPrototypeOf(Object.getPrototypeOf(V.hasOwnProperty??joO)??joO)?.toString))N=V+"",x.push({start:Z.length+X.length,length:N.length,error:`Value of type ${Object.prototype.toString.call(V).slice(8,-1)} is not a valid path parameter`});return Z+X+(Q===W.length?"":N)},""),K=Y.split(/[?#]/,1)[0],y=/(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi,q;while((q=y.exec(K))!==null)x.push({start:q.index,length:q[0].length,error:`Value "${q[0]}" can't be safely passed as a path parameter`});if(x.sort((Z,X)=>Z.start-X.start),x.length>0){let Z=0,X=x.reduce((Q,V)=>{let N=" ".repeat(V.start-Z),M="^".repeat(V.length);return Z=V.start+V.length,Q+N+M},"");throw new sz(`Path parameters result in path with invalid segments:
+${x.map((Q)=>Q.error).join(`
+`)}
+${Y}
+${X}`)}return Y},qx;

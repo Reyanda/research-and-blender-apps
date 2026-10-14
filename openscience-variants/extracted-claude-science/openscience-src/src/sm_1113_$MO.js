@@ -1,0 +1,1 @@
+var nG7=S(()=>{X6_();dG7=["GET","HEAD"]});function $MO(O){return{name:"tlsPolicy",sendRequest:async(z,w)=>{if(!z.tlsSettings)z.tlsSettings=O;return w(z)}}}

@@ -1,0 +1,1 @@
+var Hiz=S(()=>{hqO=class hqO{options;constructor(O){this.options=O}[Symbol.asyncIterator](){return this.asyncIterator()}async*asyncIterator(){for await(let O of this.options.messageStream)yield this.options.encoder.encode(O);if(this.options.includeEndFrame)yield new Uint8Array(0)}}});var PqO;

@@ -1,0 +1,1 @@
+var Zb_=S(()=>{ol7();YJ()});function eBG(O,z){let w=z?"auto":"never";return[{type:"log",item_count:O.length,content_type:"application/vnd.sentry.items.log+json"},{version:2,...Wt()&&{ingest_settings:{infer_ip:w,infer_user_agent:w}},items:O}]}function dl7(O,z,w,W,G){let x={};if(z?.sdk)x.sdk={name:z.sdk.name,version:z.sdk.version};if(!!w&&!!W)x.dsn=xV(W);return F0(x,[eBG(O,G)])}

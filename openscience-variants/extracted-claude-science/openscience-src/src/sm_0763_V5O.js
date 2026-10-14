@@ -1,0 +1,1 @@
+var Jfz=S(()=>{Ufz={environmentVariableSelector:(O)=>O.AWS_EC2_METADATA_SERVICE_ENDPOINT,configFileSelector:(O)=>O.ec2_metadata_service_endpoint,default:void 0}});var SS;

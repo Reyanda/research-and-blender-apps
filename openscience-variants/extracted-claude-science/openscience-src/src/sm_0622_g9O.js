@@ -1,0 +1,1 @@
+var _gz=S(()=>{iO();Cz();Dpw=/^github::([A-Za-z0-9][A-Za-z0-9-]*)\/([A-Za-z0-9_.-]+)(?:@((?!\/)(?!.*\.\.)(?!.*\/\/)(?!.*\/$)[A-Za-z0-9_.\/-]+))?$/;tG_=new Set;upw=/version (\d+\.\d+)\.\d+(?: (?:Patched|alpha|beta|RC|Under development \(unstable\)))? \(\d{4}-\d{2}-\d{2}/;C9O=class C9O extends Error{}});var sC_;

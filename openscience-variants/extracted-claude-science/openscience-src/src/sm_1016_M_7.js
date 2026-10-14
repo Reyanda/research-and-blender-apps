@@ -1,0 +1,1 @@
+var N_7=S(()=>{/*! @azure/msal-common v16.7.0 2026-06-05 */});function M_7(O){return O.hasOwnProperty("tenant_discovery_endpoint")&&O.hasOwnProperty("metadata")}

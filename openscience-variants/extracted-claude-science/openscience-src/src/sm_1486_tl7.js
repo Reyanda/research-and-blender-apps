@@ -1,0 +1,1 @@
+var rl7=S(()=>{GA();xA();Zb_()});function tl7(O,z){let w=z??zIG(O)??[];if(w.length===0)return;let W=O.getOptions(),G=al7(w,W._metadata,W.tunnel,O.getDsn(),O.getDataCollectionOptions().userInfo);el7().set(O,[]),O.emit("flushMetrics"),O.sendEnvelope(G)}function zIG(O){return el7().get(O)}function el7(){return AN("clientToMetricBufferMap",()=>new WeakMap)}

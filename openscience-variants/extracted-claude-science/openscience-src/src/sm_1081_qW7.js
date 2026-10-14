@@ -1,0 +1,1 @@
+var Jv=S(()=>{yW7()});function qW7(O,z){let{cleanupBeforeAbort:w,abortSignal:W,abortErrorMsg:G}=z??{};return new Promise((x,Y)=>{function K(){Y(new LY(G??"The operation was aborted."))}function y(){W?.removeEventListener("abort",q)}function q(){w?.(),y(),K()}if(W?.aborted)return K();try{O((Z)=>{y(),x(Z)},(Z)=>{y(),Y(Z)})}catch(Z){Y(Z)}W?.addEventListener("abort",q)})}

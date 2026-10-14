@@ -1,0 +1,1 @@
+var Ch_=S(()=>{mY();yh_();SG();rK();ra();sa();Zb();FN()});class I5_{#_;constructor(O){this.#_=new Vb(O)}setProtectedHeader(O){return this.#_.setProtectedHeader(O),this}async sign(O,z){let w=await this.#_.sign(O,z);if(w.payload===void 0)throw TypeError("use the flattened module for creating JWS with b64: false");return`${w.protected}.${w.payload}.${w.signature}`}}

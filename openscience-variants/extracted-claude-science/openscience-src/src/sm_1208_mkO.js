@@ -1,0 +1,1 @@
+var rx7=S(()=>{ukO();FG=class FG extends Un{accountName;accountKey;constructor(O,z){super();this.accountName=O,this.accountKey=Buffer.from(z,"base64")}create(O,z){return new eH_(O,z,this)}computeHMACSHA256(O){return CTW("sha256",this.accountKey).update(O,"utf8").digest("base64")}}});var o8;

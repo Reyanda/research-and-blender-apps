@@ -1,0 +1,1 @@
+var ix7=S(()=>{IK()});class NH{_nextPolicy;_options;constructor(O,z){this._nextPolicy=O,this._options=z}shouldLog(O){return this._options.shouldLog(O)}log(O,z){this._options.log(O,z)}}var cH_;

@@ -1,0 +1,1 @@
+var _p7=S(()=>{KJ();rl7()});function Op7(O){let z={trace_id:O.trace_id,span_id:O.span_id,parent_span_id:O.parent_span_id,name:O.description||"",start_timestamp:O.start_timestamp,end_timestamp:O.timestamp||O.start_timestamp,status:!O.status||O.status==="ok"||O.status==="cancelled"?"ok":"error",is_segment:!1,attributes:{...O.data},links:O.links};return hc7(z)}

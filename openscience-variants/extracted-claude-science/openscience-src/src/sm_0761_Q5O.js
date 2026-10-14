@@ -1,0 +1,1 @@
+var kfz=S(()=>{Mfz=W_(Z9(),1);uL_=class uL_ extends Mfz.CredentialsProviderError{tryNextLink;name="InstanceMetadataV1FallbackError";constructor(O,z=!0){super(O,z);this.tryNextLink=z,Object.setPrototypeOf(this,uL_.prototype)}}});var YT;

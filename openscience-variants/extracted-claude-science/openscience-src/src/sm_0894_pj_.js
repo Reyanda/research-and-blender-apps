@@ -1,0 +1,1 @@
+var lj_=S(()=>{jz();IO();BO();haz=W_(SO(),1),Paz=W_(QO(),1);fS=class fS extends Paz.Command.classBuilder().ep(m_).m(function(O,z,w,W){return[haz.getEndpointPlugin(w,O.getEndpointParameterInstructions()),kO(w)]}).s("AmazonS3","ListBuckets",{}).n("S3Client","ListBucketsCommand").sc(Nbz).build(){}});var baz,faz,hx_;

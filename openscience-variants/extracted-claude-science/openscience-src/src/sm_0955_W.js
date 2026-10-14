@@ -1,0 +1,7 @@
+var Qi=S(()=>{xv=class xv extends Error{constructor(O,z){super(O,z);this.name=sCW}};PQO=class PQO extends Error{statusCode;errorResponse;constructor(O,z,w){let W={error:"unknown",errorDescription:"An unknown error occurred and no additional details are available."};if(nCW(z))W=_ez(z);else if(typeof z==="string")try{let G=JSON.parse(z);W=_ez(G)}catch(G){if(O===400)W={error:"invalid_request",errorDescription:`The service indicated that the request was invalid.
+
+${z}`};else W={error:"unknown_error",errorDescription:`An unknown error has occurred. Response body:
+
+${z}`}}else W={error:"unknown_error",errorDescription:"An unknown error occurred and no additional details are available."};super(`${W.error} Status code: ${O}
+More details:
+${W.errorDescription},`,w);this.statusCode=O,this.errorResponse=W,this.name=hQO}};lS=class lS extends Error{scopes;getTokenOptions;constructor(O){super(O.message,O.cause?{cause:O.cause}:void 0);this.scopes=O.scopes,this.getTokenOptions=O.getTokenOptions,this.name="AuthenticationRequiredError"}}});import{EOL as aCW}from"os";import rCW from"util";import tCW from"process";function Oez(O,...z){tCW.stderr.write(`${rCW.format(O,...z)}${aCW}`)}var zez=()=>{};import mx_ from"process";function sj_(O){return mx_.env[O]}var wez,Wez,aj_=!0;

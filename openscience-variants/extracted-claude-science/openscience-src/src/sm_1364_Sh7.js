@@ -1,0 +1,1 @@
+var $h7=S(()=>{FN();mY();SG();rK();Zh_()});async function Sh7(O,z){let w={...O,...z?.header};if(!O3(w.jwk))throw new fW('"jwk" (JSON Web Key) Header Parameter must be a JSON object');let W=await SE({...w.jwk,ext:!0},w.alg);if(W instanceof Uint8Array||W.type!=="public")throw new fW('"jwk" (JSON Web Key) Header Parameter must be a public key');return W}

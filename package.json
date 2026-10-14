@@ -1,0 +1,9 @@
+{
+  "name": "research-and-blender-apps",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "engines": { "node": "^22.18.0 || >=24.11.0" },
+  "dependencies": { "@babel/parser": "8.0.4" }
+}

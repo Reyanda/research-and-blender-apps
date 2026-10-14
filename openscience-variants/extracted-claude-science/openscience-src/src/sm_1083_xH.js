@@ -1,0 +1,1 @@
+var XW7=S(()=>{ZW7()});function xH(O){if(kh(O))return O.message;else{let z;try{if(typeof O==="object"&&O)z=JSON.stringify(O);else z=String(O)}catch(w){z="[unable to stringify input]"}return`Unknown error ${z}`}}

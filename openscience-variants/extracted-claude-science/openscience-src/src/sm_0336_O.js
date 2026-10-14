@@ -1,0 +1,1 @@
+var Mxz=S(()=>{W4w=function(){function O(z){this.populate=z,this.value=void 0}return O.prototype.getValue=function(){return this.value},O.prototype.access=function(){if(!this.value)this.value=this.populate();return this.value},O.prototype.invalidate=function(){this.value=void 0},O.populatedBy=function(z){return new O(z)},O}(),xK=W4w});

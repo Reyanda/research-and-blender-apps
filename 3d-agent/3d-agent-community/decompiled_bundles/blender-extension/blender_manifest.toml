@@ -1,0 +1,19 @@
+schema_version = "1.0.0"
+
+# Blender 4.2+ Extension manifest. Loaded as `bl_ext.user_default.agent_3d`
+# after `blender --command extension install-file` per ADR 0013.
+# Spec: arch/prds/product/03-agent-subsystem.md §14.
+
+id = "agent_3d"
+version = "0.1.0"
+name = "3D Agent"
+tagline = "TCP bridge for the 3D Agent desktop app"
+type = "add-on"
+maintainer = "Drexfy Tecnologies LTDA <support@drexfy.com>"
+website = "https://3d-agent.com"
+license = ["SPDX:Apache-2.0"]
+blender_version_min = "4.2.0"
+
+# No tags — the extension isn't published to extensions.blender.org; it ships
+# inside the 3D Agent installer. Per ADR 0013 "Auto-update of the extension".
+tags = ["Development"]

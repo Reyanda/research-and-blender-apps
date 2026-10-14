@@ -1,0 +1,1 @@
+var Ym_=S(()=>{p7();iF();kcO=class kcO extends OY{static[KO]="SQLiteRealBuilder";constructor(O){super(O,"number","SQLiteReal")}build(O){return new UcO(O,this.config)}};UcO=class UcO extends Y1{static[KO]="SQLiteReal";getSQLType(){return"real"}}});function j_(O,z={}){let{name:w,config:W}=CV(O,z);if(W.mode==="json")return new gcO(w);return new JcO(w,W)}var JcO,CcO,gcO,vcO;

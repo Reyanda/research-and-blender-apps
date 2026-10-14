@@ -1,0 +1,1 @@
+var fo7=S(()=>{uW();uW();t4();eW();e4()});function vPO(O){O.get("/api/files/ref-artifact",async(z,w)=>{try{let W=await MB_.refArtifactForPath(H_(O),{user:O.getUser(z),host:z.query.host??"local",absPath:z.query.path??"",projectId:z.query.projectId??""});return w.send(W)}catch(W){return B_(W,w)}})}

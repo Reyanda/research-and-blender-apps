@@ -1,0 +1,1 @@
+var V5O=S(()=>{(function(O){O.IPv4="IPv4",O.IPv6="IPv6"})(SS||(SS={}))});var SQW="AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE",HQW="ec2_metadata_service_endpoint_mode",Cfz;

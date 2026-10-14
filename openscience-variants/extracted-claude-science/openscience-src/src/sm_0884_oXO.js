@@ -1,0 +1,1 @@
+var lXO=S(()=>{jz();IO();BO();Maz=W_(SO(),1),kaz=W_(QO(),1);cXO=class cXO extends kaz.Command.classBuilder().ep({...m_,Bucket:{type:"contextParams",name:"Bucket"}}).m(function(O,z,w,W){return[Maz.getEndpointPlugin(w,O.getEndpointParameterInstructions()),kO(w)]}).s("AmazonS3","GetObjectRetention",{}).n("S3Client","GetObjectRetentionCommand").sc(Gbz).build(){}});var Uaz,Jaz,pXO;

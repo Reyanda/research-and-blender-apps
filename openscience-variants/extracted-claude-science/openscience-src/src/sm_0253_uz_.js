@@ -1,0 +1,1 @@
+var kV_=S(()=>{xc()});function uz_(){if(globalThis[Gn_]==null){let O=new globalThis.TextEncoder,z=new globalThis.TextDecoder;globalThis[Gn_]={encodeUtf8(w){return O.encode(w)},decodeUtf8(w){return z.decode(w)},checkUtf8(w){try{return encodeURIComponent(w),!0}catch(W){return!1}}}}return globalThis[Gn_]}var Gn_;

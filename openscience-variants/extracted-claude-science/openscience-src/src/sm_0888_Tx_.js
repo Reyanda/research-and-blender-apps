@@ -1,0 +1,1 @@
+var Dx_=S(()=>{jz();IO();BO();Laz=W_(SO(),1),jaz=W_(QO(),1);ST=class ST extends jaz.Command.classBuilder().ep({...m_,Bucket:{type:"contextParams",name:"Bucket"}}).m(function(O,z,w,W){return[Laz.getEndpointPlugin(w,O.getEndpointParameterInstructions()),kO(w)]}).s("AmazonS3","HeadBucket",{}).n("S3Client","HeadBucketCommand").sc(ybz).build(){}});var $az,Saz,Gv;

@@ -1,0 +1,1 @@
+var x37=S(()=>{W37=Symbol("rawContent")});function Y37(){let O=VMO();return{name:RMO,sendRequest:async(z,w)=>{if(z.multipartBody){for(let W of z.multipartBody.parts)if(IMO(W.body))W.body=G37(W.body)}return O.sendRequest(z,w)}}}var RMO;

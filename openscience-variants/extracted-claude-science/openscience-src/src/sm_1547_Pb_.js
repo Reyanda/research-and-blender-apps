@@ -1,0 +1,1 @@
+var td7=S(()=>{KDG=["en","es","fr","ja","de","pt","it","ko","hi","id","ru","pl","tr","nl","uk","el","cs","da","sv","no"]});function Pb_(O,z){if(O===void 0)return!0;if(typeof z==="string")return O===z;if(z)return z.has(O)||SF(O);return/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(O)||SF(O)}

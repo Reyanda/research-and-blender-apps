@@ -1,0 +1,1 @@
+var ShO=S(()=>{BN();zA();sP_();ir()});var bBG="cause",fBG=5,uBG="LinkedErrors",mBG=(O={})=>{let z=O.limit||fBG,w=O.key||bBG;return{name:uBG,preprocessEvent(W,G,x){let Y=x.getOptions();jl7($hO,Y.stackParser,w,z,W,G)}}},HhO;

@@ -1,0 +1,1 @@
+var Eiz=S(()=>{PqO=class PqO{options;constructor(O){this.options=O}[Symbol.asyncIterator](){return this.asyncIterator()}async*asyncIterator(){for await(let O of this.options.messageStream){let z=await this.options.deserializer(O);if(z===void 0)continue;yield z}}}});var bqO;

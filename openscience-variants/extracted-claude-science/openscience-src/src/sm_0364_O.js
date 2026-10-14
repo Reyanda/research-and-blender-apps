@@ -1,0 +1,2 @@
+var dt_=S(()=>{d3();H4w=function(){function O(z){this.dict=z}return O.prototype.toString=function(){return`trailer
+`+this.dict.toString()},O.prototype.sizeInBytes=function(){return 8+this.dict.sizeInBytes()},O.prototype.copyBytesInto=function(z,w){var W=w;return z[w++]=F_.t,z[w++]=F_.r,z[w++]=F_.a,z[w++]=F_.i,z[w++]=F_.l,z[w++]=F_.e,z[w++]=F_.r,z[w++]=F_.Newline,w+=this.dict.copyBytesInto(z,w),w-W},O.of=function(z){return new O(z)},O}(),HN_=H4w});var E4w,Kl;

@@ -1,0 +1,1 @@
+var wiz=S(()=>{zoz();Adz();mdz();pdz();ddz();Oiz();ziz=W_(Z9(),1)});var jj_,QCW=(O={})=>async({callerClientConfig:z}={})=>{O.logger?.debug("@aws-sdk/credential-provider-ini - fromIni");let w=await jj_.parseKnownFiles(O);return AqO(jj_.getProfileName({profile:O.profile??z?.profile}),w,O,z)};

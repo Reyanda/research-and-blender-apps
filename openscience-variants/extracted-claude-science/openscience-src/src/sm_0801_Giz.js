@@ -1,0 +1,1 @@
+var Wiz=S(()=>{wiz();jj_=W_(my(),1)});var Giz={};uO(Giz,{fromIni:()=>QCW});

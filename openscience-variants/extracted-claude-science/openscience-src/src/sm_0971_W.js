@@ -1,0 +1,1 @@
+var w4=S(()=>{/*! @azure/msal-common v16.7.0 2026-06-05 */$w=class $w extends Error{constructor(O,z,w){let W=z||(O?C$_(O):""),G=W?`${O}: ${W}`:O;super(G);Object.setPrototypeOf(this,$w.prototype),this.errorCode=O||"",this.errorMessage=W||"",this.subError=w||"",this.name="AuthError"}setCorrelationId(O){this.correlationId=O}}});function q3(O){return new Si(O)}var Si;

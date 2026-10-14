@@ -1,0 +1,2 @@
+var tcz=S(()=>{cmz();MyO=W_(t9(),1),zi=W_(Z9(),1),rcz=W_(my(),1)});var ecz,UyO=(O,z)=>{let{sso_start_url:w,sso_account_id:W,sso_region:G,sso_role_name:x}=O;if(!w||!W||!G||!x)throw new ecz.CredentialsProviderError(`Profile is configured with invalid SSO credentials. Required parameters "sso_account_id", "sso_region", "sso_role_name", "sso_start_url". Got ${Object.keys(O).join(", ")}
+Reference: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html`,{tryNextLink:!1,logger:z});return O};

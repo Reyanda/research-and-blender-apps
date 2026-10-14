@@ -1,0 +1,10 @@
+# OpenScience Configuration
+# Set your DeepSeek API key here or via DEEPSEEK_API_KEY env var
+api_key = ""
+
+[server]
+host = "127.0.0.1"
+port = 8000
+
+[llm]
+model = ""

@@ -1,0 +1,2 @@
+var k97=S(()=>{TRW=RRW(DRW)});async function _kO(O){return M97(`tell application "Finder" to set app_path to application file id "${O}" as string
+tell application "System Events" to get value of property list item "CFBundleName" of property list file (app_path & ":Contents:Info.plist")`)}

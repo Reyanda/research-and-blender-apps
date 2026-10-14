@@ -1,0 +1,1 @@
+var GOz=S(()=>{NI()});function xOz(O,z,...w){if(w.length>0)throw Error();return O.services[z]}var YOz="@bufbuild/protobuf",KOz;

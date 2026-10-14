@@ -1,0 +1,1 @@
+var zA=S(()=>{ir();LF();YJ()});function jF(){return WV()/am7}function RAG(){let{performance:O}=Ax;if(!O?.now||!O.timeOrigin)return jF;let z=O.timeOrigin;return()=>{return(z+sr(()=>O.now()))/am7}}function rP_(){return(sm7??(sm7=RAG()))()}var am7=1000,sm7;

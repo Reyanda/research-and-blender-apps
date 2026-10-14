@@ -1,0 +1,1 @@
+var fy_=S(()=>{g0();IZ();Ul7=[]});var Cl7,ABG="FunctionToString",gl7,BBG=()=>{return{name:ABG,setupOnce(){Cl7=Function.prototype.toString;try{Function.prototype.toString=function(...O){let z=bm7(this),w=gl7.has(RN())&&z!==void 0?z:this;return Cl7.apply(w,O)}}catch{}},setup(O){gl7.set(O,!0)}}},LhO;

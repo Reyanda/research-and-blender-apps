@@ -1,0 +1,3 @@
+var Bgz=S(()=>{N3_();Kg_();X3O()});function h9O(O,z=null,w="",W=null,G=null){let x=z??YX;if(O.length<=x)return{content:O,hint:null};if(W&&G){let K=PV(W),y=dm(O,x,G,K);if(y.content.length<=x)return y}let Y=new Intl.NumberFormat("en-US");if(w)console.warn(`[${w}] Truncating tool result: ${Y.format(O.length)} \u2192 ${Y.format(x)} chars`);return{content:UW(O,x)+`
+
+[... TRUNCATED: Response was ${Y.format(O.length)} characters, showing first ${Y.format(x)}. ...]`,hint:null}}

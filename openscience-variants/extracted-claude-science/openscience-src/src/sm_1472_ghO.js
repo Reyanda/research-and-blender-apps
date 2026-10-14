@@ -1,0 +1,1 @@
+var qb_=S(()=>{g0();IZ();xA();yb_();Ml7()});function ghO(O,z){let w=RN(),W=WA();if(!w)return;let{beforeBreadcrumb:G=null,maxBreadcrumbs:x=EBG}=w.getOptions();if(x<=0)return;let K={timestamp:jF(),...O},y=G?pb(()=>G(K,z)):K;if(y===null)return;if(w.emit)w.emit("beforeAddBreadcrumb",y,z);W.addBreadcrumb(y,x)}var EBG=100;

@@ -1,0 +1,5 @@
+var zOO=S(()=>{Dz();Hz()});class rw_{db;constructor(O){this.db=O}async get(O){return(await this.db.select().from(f0).where(u(f0.rootFrameId,O)).limit(1))[0]??null}async advance(O,z){let w=z.repair===!0,W=z.observedUuid??null,G=await this.db.insert(f0).values({rootFrameId:O,messageUuid:z.messageUuid,messageIndex:z.messageIndex}).onConflictDoUpdate({target:f0.rootFrameId,set:{messageUuid:w?i`excluded.message_uuid`:i`CASE
+            WHEN excluded.message_uuid IS NOT NULL THEN excluded.message_uuid
+            WHEN excluded.message_index = ${f0.messageIndex} THEN ${f0.messageUuid}
+            ELSE NULL
+          END`,messageIndex:i`excluded.message_index`,...w?{}:{updatedAt:new Date}},setWhere:w?i`(${W} IS NULL AND ${f0.messageUuid} IS NULL) OR ${f0.messageUuid} = ${W}`:i`(excluded.message_uuid IS NOT NULL AND excluded.message_uuid = ${f0.messageUuid}) OR excluded.message_index >= ${f0.messageIndex}`}).returning();if(G[0])return G[0];return this.get(O)}}

@@ -1,0 +1,1 @@
+var N97=S(()=>{BRW=HRW(ARW)});import IRW from"process";import{promisify as RRW}from"util";import{execFile as DRW,execFileSync as lp9}from"child_process";async function M97(O,{humanReadableOutput:z=!0,signal:w}={}){if(IRW.platform!=="darwin")throw Error("macOS only");let W=z?[]:["-ss"],G={};if(w)G.signal=w;let{stdout:x}=await TRW("osascript",["-e",O,W],G);return x.trim()}var TRW;

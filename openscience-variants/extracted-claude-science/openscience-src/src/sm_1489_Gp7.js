@@ -1,0 +1,1 @@
+var Wp7=S(()=>{Zb_();vc7();zp7()});function Gp7(O,z,w){let W=[{type:"client_report"},{timestamp:w||jF(),discarded_events:O}];return F0(z?{dsn:z}:{},[W])}

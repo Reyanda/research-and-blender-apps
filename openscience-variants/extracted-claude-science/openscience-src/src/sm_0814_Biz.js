@@ -1,0 +1,1 @@
+var Aiz=S(()=>{bqO=class bqO{options;constructor(O){this.options=O}[Symbol.asyncIterator](){return this.asyncIterator()}async*asyncIterator(){for await(let O of this.options.inputStream)yield this.options.serializer(O)}}});

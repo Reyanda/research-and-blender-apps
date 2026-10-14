@@ -1,0 +1,1 @@
+var qSz=S(()=>{cQ();T6O();ySz={environmentVariableSelector:(O)=>Kd(O,Ftw,mQ,XS.ENV),configFileSelector:(O)=>Kd(O,Ltw,mQ,XS.CONFIG),default:Pv_}});var jtw="AWS_RESPONSE_CHECKSUM_VALIDATION",$tw="response_checksum_validation",ZSz;

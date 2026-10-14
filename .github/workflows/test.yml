@@ -1,0 +1,26 @@
+name: Offline tests
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  python-and-extraction:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: pip install -r openscience-variants/own-openscience/OpenScience/requirements.txt
+      - run: npm ci --ignore-scripts
+      - name: Research app
+        run: python3 -m unittest discover -s openscience-variants/own-openscience/OpenScience/tests -v
+      - name: API adapter
+        run: python3 openscience-variants/extracted-claude-science/ClaudeScience-patched/test_proxy.py
+      - name: Source extraction and assembly
+        run: python3 openscience-variants/extracted-claude-science/bun-decompiler/test-decompile.py
+      - name: Blender protocol and ZIP packaging
+        run: python3 3d-agent/3d-agent-community/tests/test-addon.py

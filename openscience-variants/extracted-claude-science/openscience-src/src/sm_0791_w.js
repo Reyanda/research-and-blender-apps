@@ -1,0 +1,1 @@
+var hdz=S(()=>{Rdz();Fj_=W_(Z9(),1),Ddz=W_(my(),1)});var Lj_,KCW=(O={})=>async({callerClientConfig:z}={})=>{O.logger?.debug("@aws-sdk/credential-provider-process - fromProcess");let w=await Lj_.parseKnownFiles(O);return Tdz(Lj_.getProfileName({profile:O.profile??z?.profile}),w,O.logger)};

@@ -1,0 +1,7 @@
+var acO=S(()=>{scO();bm_()});import Z7w from"crypto";import um_ from"fs";function rcO(O){let z=O.migrationsFolder,w=[],W=`${z}/meta/_journal.json`;if(!um_.existsSync(W))throw Error("Can't find meta/_journal.json file");let G=um_.readFileSync(`${z}/meta/_journal.json`).toString(),x=JSON.parse(G);for(let Y of x.entries){let K=`${z}/${Y.tag}.sql`;try{let y=um_.readFileSync(`${z}/${Y.tag}.sql`).toString(),q=y.split("--> statement-breakpoint").map((Z)=>{return Z});w.push({sql:q,bps:Y.breakpoints,folderMillis:Y.when,hash:Z7w.createHash("sha256").update(y).digest("hex")})}catch{throw Error(`No file ${K} found in ${z} folder`)}}return w}var tcO=()=>{};async function ecO(O,z,w){let W=rcO(w),G=typeof w==="string"?"__drizzle_migrations":w.migrationsTable??"__drizzle_migrations",x=i`
+		CREATE TABLE IF NOT EXISTS ${i.identifier(G)} (
+			id SERIAL PRIMARY KEY,
+			hash text NOT NULL,
+			created_at numeric
+		)
+	`;await O.run(x);let K=(await O.values(i`SELECT id, hash, created_at FROM ${i.identifier(G)} ORDER BY created_at DESC LIMIT 1`))[0]??void 0,y=[];for(let q of W)if(!K||Number(K[2])<q.folderMillis)y.push(...q.sql,`INSERT INTO \`${G}\` ("hash", "created_at") VALUES('${q.hash}', '${q.folderMillis}')`);await z(y)}

@@ -1,0 +1,47 @@
+{
+  "name": "@3dagent/codex-agent",
+  "productName": "3D Agent",
+  "version": "0.0.1",
+  "description": "3D-Agent Codex provider \u2014 starts the Codex app-server path, keeps per-chat workspaces, and falls back to the bundled Bun sidecar only for legacy runtime modes.",
+  "main": "dist/index.js",
+  "engine": "3dagent-codex-agent",
+  "author": "Drexfy Tecnologies LTDA <service@3d-agent.com>",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "build": "rolldown -c rolldown.config.mjs",
+    "build:publish": "rimraf *.tgz --glob && pnpm build && npm pack && cpx *.tgz ../../app-tauri/resources/pre-install/",
+    "lint": "biome check src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist *.tgz"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "dependencies": {
+    "@3dagent/shared-utils": "workspace:*",
+    "@janhq/core": "workspace:*",
+    "@tauri-apps/api": "2.8.0",
+    "@tauri-apps/plugin-shell": "^2.2.0"
+  },
+  "devDependencies": {
+    "cpx": "1.5.0",
+    "jsdom": "^25.0.1",
+    "rimraf": "6.0.1",
+    "rolldown": "1.0.0-beta.1",
+    "typescript": "5.9.2",
+    "vitest": "3.2.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist/**",
+    "package.json",
+    "README.md"
+  ],
+  "installConfig": {
+    "hoistingLimits": "workspaces"
+  }
+}

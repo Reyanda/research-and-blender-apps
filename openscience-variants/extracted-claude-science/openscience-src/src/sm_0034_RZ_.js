@@ -1,0 +1,2 @@
+var AZ_=S(()=>{p7();pA=class pA extends Error{static[KO]="DrizzleError";constructor({message:O,cause:z}){super(O);this.name="DrizzleError",this.cause=z}};nN=class nN extends Error{constructor(O,z,w){super(`Failed query: ${O}
+params: ${z}`);if(this.query=O,this.params=z,this.cause=w,Error.captureStackTrace(this,nN),w)this.cause=w}};EZ_=class EZ_ extends pA{static[KO]="TransactionRollbackError";constructor(){super({message:"Rollback"})}}});var bu_,BZ_,IZ_;

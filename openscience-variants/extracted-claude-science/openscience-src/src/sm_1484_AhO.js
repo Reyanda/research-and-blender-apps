@@ -1,0 +1,1 @@
+var il7=S(()=>{GA();xA();Zb_()});function AhO(O,z){let w=z??_IG(O)??[];if(w.length===0)return;let W=O.getOptions(),G=dl7(w,W._metadata,W.tunnel,O.getDsn(),O.getDataCollectionOptions().userInfo);nl7().set(O,[]),O.emit("flushLogs"),O.sendEnvelope(G)}function _IG(O){return nl7().get(O)}function nl7(){return AN("clientToLogBufferMap",()=>new WeakMap)}

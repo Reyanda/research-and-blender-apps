@@ -1,0 +1,1 @@
+var C4=S(()=>{l8();sX();nX()});class uh{url;accountName;pipeline;credential;storageClientContext;isHttps;constructor(O,z){this.url=P67(O),this.accountName=xgO(O),this.pipeline=z,this.storageClientContext=new s6_(this.url,qE_(z)),this.isHttps=cE_(b67(this.url)||"","https"),this.credential=ikO(z);let w=this.storageClientContext;w.requestContentType=void 0}}

@@ -1,0 +1,1 @@
+var Zh_=S(()=>{nIO();tT7()});async function Oh7(O,z,w,W){let G=O.slice(0,7),x=await Gh_(G,w,z,W,new Uint8Array);return{encryptedKey:x.ciphertext,iv:T3(x.iv),tag:T3(x.tag)}}async function zh7(O,z,w,W,G){let x=O.slice(0,7);return xh_(x,z,w,W,G,new Uint8Array)}

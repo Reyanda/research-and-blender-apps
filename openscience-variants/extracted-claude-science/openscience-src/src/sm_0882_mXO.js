@@ -1,0 +1,1 @@
+var fXO=S(()=>{jz();IO();BO();Xaz=W_(SO(),1),Qaz=W_(QO(),1);bXO=class bXO extends Qaz.Command.classBuilder().ep({...m_,Bucket:{type:"contextParams",name:"Bucket"}}).m(function(O,z,w,W){return[Xaz.getEndpointPlugin(w,O.getEndpointParameterInstructions()),kO(w)]}).s("AmazonS3","GetObjectLegalHold",{}).n("S3Client","GetObjectLegalHoldCommand").sc(wbz).build(){}});var Vaz,Naz,uXO;

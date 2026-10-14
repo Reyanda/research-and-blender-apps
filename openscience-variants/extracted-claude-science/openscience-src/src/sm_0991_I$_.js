@@ -1,0 +1,1 @@
+var w2O=S(()=>{/*! @azure/msal-common v16.7.0 2026-06-05 */W4={Default:0,Adfs:1,Dsts:2,Ciam:3}});function I$_(O){if(O)return O.tid||O.tfp||O.acr||null;return null}

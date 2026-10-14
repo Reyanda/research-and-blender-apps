@@ -1,0 +1,1 @@
+var $_7=S(()=>{Ii();$i();v1();fi();Ri();rS();W6();j1_();pi();x6();/*! @azure/msal-common v16.7.0 2026-06-05 */});function eT(O,z){if(!O)return;if(z.resource&&(S_7(z.extraParameters)||S_7(z.extraQueryParameters)))throw UO(fVO);if(!z.resource)throw UO(bVO)}function S_7(O){if(!O)return!1;return Object.prototype.hasOwnProperty.call(O,"resource")}

@@ -1,0 +1,1 @@
+var SmO=S(()=>{kmO();jmO();$mO={startActiveSpan(O,z){if(!Au_)return z();if(!Bu_)Bu_=Au_.trace.getTracer("drizzle-orm",LmO);return MmO((w,W)=>W.startActiveSpan(O,(G)=>{try{return z(G)}catch(x){throw G.setStatus({code:w.SpanStatusCode.ERROR,message:x instanceof Error?x.message:"Unknown error"}),x}finally{G.end()}}),Au_,Bu_)}}});var M9;

@@ -1,0 +1,1 @@
+var X87=S(()=>{UgO=class UgO extends Error{constructor(O){super(O);this.name="PollerStoppedError",Object.setPrototypeOf(this,UgO.prototype)}};JgO=class JgO extends Error{constructor(O){super(O);this.name="PollerCancelledError",Object.setPrototypeOf(this,JgO.prototype)}}});var Q87=()=>{};var V87=()=>{};

@@ -1,0 +1,1 @@
+var mMO=S(()=>{J6_();y6_();MH_()});function g6_(O={}){let z=fMO(O??{});if(O.credentialOptions)z.addPolicy(Fh({credential:O.credentialOptions.credential,scopes:O.credentialOptions.credentialScopes}));return z.addPolicy(C6_(O.serializationOptions),{phase:"Serialize"}),z.addPolicy(u37(O.deserializationOptions),{phase:"Deserialize"}),z}

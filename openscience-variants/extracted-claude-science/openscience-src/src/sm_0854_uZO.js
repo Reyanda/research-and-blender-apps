@@ -1,0 +1,1 @@
+var bZO=S(()=>{jz();IO();BO();qsz=W_(SO(),1),Zsz=W_(QO(),1);PZO=class PZO extends Zsz.Command.classBuilder().ep({...m_,Bucket:{type:"contextParams",name:"Bucket"}}).m(function(O,z,w,W){return[qsz.getEndpointPlugin(w,O.getEndpointParameterInstructions()),kO(w)]}).s("AmazonS3","DeleteObjectTagging",{}).n("S3Client","DeleteObjectTaggingCommand").sc(EPz).build(){}});var Xsz,Qsz,fZO;

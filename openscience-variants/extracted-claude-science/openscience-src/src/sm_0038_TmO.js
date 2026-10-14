@@ -1,0 +1,1 @@
+var RmO=S(()=>{p7();K5();BmO=Symbol.for("drizzle:PgInlineForeignKeys"),ImO=Symbol.for("drizzle:EnableRLS");uu_=class uu_ extends eO{static[KO]="PgTable";static Symbol=Object.assign({},eO.Symbol,{InlineForeignKeys:BmO,EnableRLS:ImO});[BmO]=[];[ImO]=!1;[eO.Symbol.ExtraConfigBuilder]=void 0;[eO.Symbol.ExtraConfigColumns]={}}});var mu_,DmO;

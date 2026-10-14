@@ -1,0 +1,1 @@
+var Siz=S(()=>{TqO=class TqO{options;constructor(O){this.options=O}[Symbol.asyncIterator](){return this.asyncIterator()}async*asyncIterator(){for await(let O of this.options.inputStream)yield this.options.decoder.decode(O)}}});var hqO;
