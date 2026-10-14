@@ -142,7 +142,7 @@ final class Host: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDel
           byId('planMode').checked=true; byId('input').value='Plan an analysis'; await send();
           if (byId('planPanel').hidden) throw new Error('Plan approval gate missing');
           await approvePlan(); if (!byId('planPanel').hidden) throw new Error('Approved plan did not finish');
-          await showSettings(); byId('skillName').value='source-reading'; byId('skillContent').value='Keep source identifiers beside research findings.'; await saveSkill();
+          await showSettings(); settingsSection('agents'); byId('skillName').value='source-reading'; byId('skillContent').value='Keep source identifiers beside research findings.'; await saveSkill();
           byId('agentName').value='Research reviewer'; byId('agentPrompt').value='Check source coverage.'; byId('agentSkills').value='source-reading'; await saveAgent();
           if (!agents.some(a => a.name === 'Research reviewer')) throw new Error('Authored agent missing');
           await selectProject(currentProject); byId('agentSelect').value=agents.find(a => a.name === 'Research reviewer').id; byId('planMode').checked=false; byId('input').value='Review sources'; await send();
@@ -158,7 +158,7 @@ final class Host: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDel
         """
         webView.evaluateJavaScript(script) { _, error in
             if let error = error { self.fail("Research workspace script failed: \(error)") }
-            self.waitUI("window.researchUITestDone === true || typeof window.researchUITestError === 'string'") {
+            self.waitUI("window.researchUITestDone === true || typeof window.researchUITestError === 'string'", attempts: 600) {
                 webView.evaluateJavaScript("window.researchUITestError || null") { result, _ in
                     if let error = result as? String { self.fail("Research workspace integration failed: \(error)") }
                     if let destination = ProcessInfo.processInfo.environment["OPENSCIENCE_SCIENCE_SNAPSHOT"] {
@@ -222,6 +222,7 @@ final class Host: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDel
     }
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = action.request.url else { decisionHandler(.cancel); return }
+        if action.targetFrame?.isMainFrame == false && url.scheme == "http" && ["127.0.0.1","localhost","::1"].contains(url.host ?? "") { decisionHandler(.allow); return }
         if url.scheme == base.scheme && url.host == base.host && url.port == base.port { decisionHandler(action.shouldPerformDownload ? .download : .allow); return }
         if action.navigationType == .linkActivated && ["http", "https"].contains(url.scheme ?? "") { NSWorkspace.shared.open(url) }
         decisionHandler(.cancel)

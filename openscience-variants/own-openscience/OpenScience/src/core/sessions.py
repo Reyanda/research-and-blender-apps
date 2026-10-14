@@ -85,6 +85,7 @@ class Message(BaseModel):
     model: str | None = None
     plan_mode: bool = False
     target_agent: str | None = None
+    provider_id: str | None = None
 
 class Rename(BaseModel):
     name: str = Field(min_length=1, max_length=200)
@@ -138,7 +139,11 @@ async def operation(frame, req):
         agent = profiles.selected(chosen)
         frame['agent_id'] = agent['id'] if agent else None
         extra_system = profiles.agent_context(frame['agent_id'])
-        frame['model'] = backend().resolve_model(req.model or frame.get('model'))
+        if req.provider_id is not None:
+            frame['provider_id'] = req.provider_id
+        from .providers import selected
+        provider = selected(frame.get('provider_id'))
+        frame['model'] = req.model or frame.get('model') or provider['model']
         frame['messages'] = complete_history(frame['messages'])
         frame['last_request'] = req.input_data
         frame['last_plan_mode'] = req.plan_mode

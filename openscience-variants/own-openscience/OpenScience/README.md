@@ -75,3 +75,15 @@ python3 -m unittest discover -s tests -v
 Provider fixtures test conversation contracts without paid calls. Owned MCP and SSH servers exercise real transports. Kernel integration uses actual Docker and skips when the engine or image is unavailable. Linux CI builds the image and runs those integrations. Slurm tests exercise command wiring through an owned SSH fixture; a real cluster and paid compute providers remain untested. The macOS job also builds the native host and exercises the workspace in WKWebView.
 
 The BLAST result request uses [NCBI's documented retrieval API](https://blast.ncbi.nlm.nih.gov/doc/blast-help/urlapi.html). Repeated requests for the same job reuse a result for sixty seconds.
+
+## Coding workspace and shared settings
+
+Install T3 Code and start its local runtime, or use Coding agents → Start local T3 runtime. Pair coding workspace creates a short-lived local T3 pairing link for the embedded client. The coding interface runs from the installed T3 runtime; its accounts, terminals, Git operations, model selection and permissions retain T3 behavior. No T3 executable is redistributed.
+
+Settings groups API providers, coding accounts, infrastructure, agents and skills, connections, appearance and capabilities. Science API profiles support OpenAI, Anthropic Messages, DeepSeek, OpenRouter, Gemini through its compatible endpoint, Ollama and custom compatible endpoints. Keys are encrypted in local configuration and omitted from API responses. Model discovery tests connection contracts; it does not perform paid inference.
+
+Repository files connect an existing absolute directory to a science project. File editing requires its explicit write permission and the SHA of the version read. Git inspection is read-only. Import copies the chosen source bytes into a science artifact; export requires a new path or the matching current file SHA. Symlinks, directory traversal and Git internals are rejected.
+
+The token file derives from [T3 Code source commit 6c8fed35dded](https://github.com/pingdotgg/t3code/blob/6c8fed35dded/apps/web/src/index.css), matching installed version 0.0.45. It retains T3 semantic roles, light/dark colors, font stacks and control geometry, with Science layout aliases. The upstream MIT notice is included in tokens.css.
+
+Pending capabilities are listed in Settings → Capabilities: cross-runtime science/coding transcripts and tool handoff, scanned-PDF OCR, independent scientific verification with citation resolution and analysis reruns, incremental science token streaming, authenticated remote shared access, unified provider usage/billing, live Modal/Slurm account validation and complete signed-in Claude Science workflow comparison. The merged workspace does not claim these functions are complete.

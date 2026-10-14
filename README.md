@@ -1,6 +1,6 @@
 # Research and Blender apps
 
-OpenScience implements research workflows from the retained Claude Science interfaces: independent sessions, source files, versioned analyses, Python and R kernels, scientific previews, agents, MCP connections and approved remote compute. This repository also contains the Blender bridge, API adapter and recovered source.
+OpenScience combines a scientific workspace with the installed T3 Code coding runtime. Closeable workspace tabs, sourced T3 design tokens and grouped settings connect both. OpenScience implements research workflows from the retained Claude Science interfaces: independent sessions, source files, versioned analyses, Python and R kernels, scientific previews, agents, MCP connections and approved remote compute. This repository also contains the Blender bridge, API adapter and recovered source.
 
 | Component | Location | Use |
 |---|---|---|

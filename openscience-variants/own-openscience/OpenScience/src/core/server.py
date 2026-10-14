@@ -79,7 +79,7 @@ def resolve_model(requested=None):
 
 # ── LLM Call ────────────────────────────────────────────────────
 
-async def llm_chat(messages, tools=None, model=None, stream=False):
+async def legacy_llm_chat(messages, tools=None, model=None, stream=False):
     """Call DeepSeek native API."""
     if not API_KEY:
         raise HTTPException(503, "Set DEEPSEEK_API_KEY before sending chat messages")
@@ -117,6 +117,12 @@ async def llm_chat(messages, tools=None, model=None, stream=False):
         return {"content": msg.get("content", ""), "tool_calls": tc,
                 "finish_reason": c.get("finish_reason", "stop"),
                 "usage": j.get("usage", {}), "model": j.get("model", m)}
+
+async def llm_chat(messages, tools=None, model=None, stream=False):
+    from core.sessions import ACTIVE_FRAME
+    from core import providers
+    frame = ACTIVE_FRAME.get() or {}
+    return await providers.chat(messages, tools, model, frame.get('provider_id'))
 
 # ── Tools ───────────────────────────────────────────────────────
 
@@ -409,7 +415,7 @@ def save_proj(pid, p):
     existing = DATA / "projects" / pid / "project.json"
     if existing.is_file():
         current = json.loads(existing.read_text())
-        for key in ("artifacts", "folders", "notes", "memories", "context", "memory_enabled", "reviewer_enabled", "name", "description"):
+        for key in ("artifacts", "folders", "notes", "memories", "context", "memory_enabled", "reviewer_enabled", "name", "description", "repository"):
             if key in current:
                 p[key] = current[key]
     atomic_json(DATA / "projects" / pid / "project.json", p)
@@ -588,3 +594,17 @@ app.include_router(renderers_router)
 
 if __name__ == "__main__":
     run()
+
+from core import coding, providers, t3bridge
+app.include_router(coding.router)
+app.include_router(providers.router)
+app.include_router(t3bridge.router)
+
+@app.get('/tokens.css')
+async def design_tokens():
+    from fastapi.responses import FileResponse
+    return FileResponse(ROOT / 'src/web/tokens.css', media_type='text/css')
+
+@app.on_event('shutdown')
+async def stop_coding_runtime():
+    await t3bridge.shutdown()
