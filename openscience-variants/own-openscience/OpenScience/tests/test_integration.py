@@ -50,6 +50,25 @@ class IntegrationTests(unittest.TestCase):
         value=asyncio.run(events.usage())['providers']['one']
         self.assertEqual(value['unreported_requests'],1)
         self.assertEqual(value['input_tokens'],8)
+    def test_pubmed_retains_identifiers_and_search_interpretation(self):
+        from connectors import mcp
+        factory=httpx.AsyncClient
+        def handler(request):
+            if request.url.path.endswith('esearch.fcgi'):
+                return httpx.Response(200,json={'esearchresult': {'idlist':['123'], 'count':'7', 'querytranslation':'translated query', 'warninglist':{'outputmessages':['fixture warning']}}})
+            return httpx.Response(200,json={'result':{'uids':['123'],'123':{'title':'Fixture paper','authors':[{'name':'Example A'}],'articleids':[{'idtype':'doi','value':'10.1000/fixture'},{'idtype':'pmc','value':'PMC123'}]}}})
+        with patch.object(httpx,'AsyncClient',lambda:factory(transport=httpx.MockTransport(handler))):
+            result=asyncio.run(mcp.mcp_search('pubmed','fixture query',{'max_results':1}))
+        self.assertEqual(result['results'][0]['doi'],'10.1000/fixture')
+        self.assertEqual(result['results'][0]['pmcid'],'PMC123')
+        self.assertEqual(result['query_translation'],'translated query')
+        self.assertEqual(result['total'],7)
+        self.assertEqual(result['warnings']['outputmessages'],['fixture warning'])
+        with patch.object(httpx,'AsyncClient',lambda:factory(transport=httpx.MockTransport(lambda r:httpx.Response(429,json={'error':'rate limited'})))):
+            result=asyncio.run(mcp.mcp_search('pubmed','fixture query',{}))
+        self.assertIn('error',result)
+        self.assertNotIn('results',result)
+
     def test_provider_can_discover_without_guessed_model(self):
         async def run():
             profile=await providers.create(providers.Provider(name='Automatic',kind='custom',base_url='http://fixture.invalid/v1'))

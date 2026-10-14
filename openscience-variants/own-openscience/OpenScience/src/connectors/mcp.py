@@ -4,6 +4,7 @@ Complete 60+ connectors matching original Claude Science app.
 """
 
 from typing import Dict, Optional, Any
+from datetime import datetime, timezone
 
 # All MCP connectors from original Claude Science / Operon app
 
@@ -508,13 +509,25 @@ async def mcp_search(connector_id: str, query: str, params: Dict = None) -> Dict
                 resp = await client.get(f"{base_url}/esearch.fcgi", params={
                     "db": "pubmed", "term": query, "retmax": maximum, "retmode": "json"
                 }, timeout=30.0)
+                resp.raise_for_status()
                 data = resp.json()
-                ids = data.get("esearchresult", {}).get("idlist", [])
+                if not isinstance(data.get('esearchresult'), dict):
+                    return {'error': 'PubMed returned no search result record'}
+                search = data['esearchresult']
+                if search.get('errorlist'):
+                    return {'error': 'PubMed rejected part of the search query', 'details': search['errorlist'], 'query': raw_query}
+                ids = search.get("idlist", [])
+                provenance = {'query': raw_query, 'query_translation': search.get('querytranslation'),
+                              'warnings': search.get('warninglist'), 'total': int(search.get('count', 0)),
+                              'source': 'NCBI PubMed', 'retrieved_at': datetime.now(timezone.utc).isoformat()}
                 if ids:
                     detail = await client.get(f"{base_url}/esummary.fcgi", params={"db": "pubmed", "id": ",".join(ids), "retmode": "json"}, timeout=30.0)
+                    detail.raise_for_status()
                     articles = detail.json().get("result", {})
-                    return {"results": [{"pmid": k, "title": v.get("title", ""), "authors": [a.get("name", "") for a in v.get("authors", [])[:3]], "journal": v.get("fulljournalname", ""), "pubdate": v.get("pubdate", "")} for k, v in articles.items() if isinstance(v, dict)]}
-                return {"results": [], "total": 0}
+                    if articles.get('error'):
+                        return {'error': 'PubMed summary retrieval failed', **provenance}
+                    return {"results": [{"pmid": k, "title": v.get("title", ""), "authors": [a.get("name", "") for a in v.get("authors", [])[:3]], "journal": v.get("fulljournalname", ""), "pubdate": v.get("pubdate", ""), "doi": next((a.get("value") for a in v.get("articleids", []) if a.get("idtype") == "doi"), None), "pmcid": next((a.get("value") for a in v.get("articleids", []) if a.get("idtype") == "pmc"), None)} for k, v in articles.items() if isinstance(v, dict)], **provenance}
+                return {"results": [], **provenance}
             
             # Clinical Trials
             elif connector_id == "clinical-trials":

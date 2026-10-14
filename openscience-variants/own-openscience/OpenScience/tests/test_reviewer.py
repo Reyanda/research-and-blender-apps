@@ -86,5 +86,28 @@ class ReviewerTests(unittest.TestCase):
         asyncio.run(check())
         self.assertIn('verification', sessions.find(self.fid))
 
+    def test_successful_search_is_not_a_failed_code_cell(self):
+        f = sessions.find(self.fid)
+        f['executions'] = [{'id': 'search', 'tool': 'search_mcp', 'status': 'completed', 'result': {'results': [{'pmid': '123'}]}}]
+        sessions.write(f)
+        self.assertEqual(self.audit()['findings'], [])
+
+    def test_reproduction_skips_search_and_replays_both_languages(self):
+        f = sessions.find(self.fid)
+        f['executions'] = [
+            {'id': 'search', 'tool': 'search_mcp', 'status': 'completed', 'result': {'results': []}},
+            {'id': 'python', 'language': 'python', 'code': 'print(2)', 'result': {'success': True, 'stdout': '2', 'stderr': ''}},
+            {'id': 'r', 'language': 'r', 'code': 'cat(2)', 'result': {'success': True, 'stdout': '2', 'stderr': ''}}]
+        sessions.write(f)
+        calls=[]
+        async def execute(frame, code, language):
+            calls.append(language);frame['executions'].append({'id': language, 'code': code, 'language': language})
+            return {'success': True, 'stdout': '2', 'stderr': ''}
+        with patch.object(sessions, 'execute_tool_cell', execute), patch('core.kernels.interrupt', AsyncMock()):
+            result=asyncio.run(reviewer.reproduce(self.fid))
+        self.assertEqual(calls, ['python', 'r'])
+        self.assertTrue(result['all_matched'])
+
+
 if __name__ == '__main__':
     unittest.main()

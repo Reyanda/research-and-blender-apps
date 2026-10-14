@@ -24,7 +24,10 @@ def snapshot(frame):
     findings, receipts, sources = [], [], []
     executions = frame.get('executions', [])
     for cell in executions:
-        if cell.get('status') != 'completed' or not cell.get('result', {}).get('success', False):
+        result = cell.get('result', {})
+        is_code = bool(cell.get('code')) or cell.get('language') in ('python', 'r')
+        success = result.get('success', False) if is_code else not result.get('error') and result.get('success') is not False
+        if cell.get('status') != 'completed' or not success:
             findings.append(finding('execution-success', 'Execution failed or has no successful completion receipt', {'execution_id': cell.get('id'), 'status': cell.get('status'), 'result': cell.get('result')}, 'Outputs associated with this execution require investigation.'))
     for a in p['artifacts']:
         for v in a['versions']:
@@ -175,7 +178,9 @@ async def reproduce(fid: str):
     source = sessions.find(fid)
     if source.get('status') == 'running':
         raise HTTPException(409, 'Wait for the source session to finish')
-    cells = source.get('executions', [])
+    cells = [cell for cell in source.get('executions', [])
+             if isinstance(cell.get('code'), str) and cell.get('code').strip()
+             and cell.get('language') in ('python', 'r')]
     if not cells or len(cells) > 30:
         raise HTTPException(400, 'Reproduction requires one to thirty recorded cells')
     before = hashlib.sha256(json.dumps(cells, sort_keys=True).encode()).hexdigest()
