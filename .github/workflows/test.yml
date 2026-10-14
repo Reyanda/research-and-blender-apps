@@ -24,3 +24,27 @@ jobs:
         run: python3 openscience-variants/extracted-claude-science/bun-decompiler/test-decompile.py
       - name: Blender protocol and ZIP packaging
         run: python3 3d-agent/3d-agent-community/tests/test-addon.py
+      - name: Replacement bridge contracts
+        run: python3 desktop/test-bridge.py
+  macos-desktop:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r openscience-variants/own-openscience/OpenScience/requirements.txt
+      - name: Install Blender
+        run: brew install --cask --appdir="$HOME/Applications" blender
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+      - name: Actual Blender scene and add-on tests
+        run: blender --background --factory-startup --python-exit-code 1 --python "$PWD/3d-agent/3d-agent-community/tests/test-addon.py"
+      - name: Actual HTTP and Blender protocol integration
+        run: BLENDER_BINARY="$HOME/Applications/Blender.app/Contents/MacOS/Blender" python3 desktop/test-blender-bridge.py
+      - name: Build native macOS app
+        run: python3 desktop/build-app.py
+      - name: Native backend lifecycle
+        run: python3 desktop/test-native.py
+      - name: Actual WebKit scene interaction
+        run: BLENDER_BINARY="$HOME/Applications/Blender.app/Contents/MacOS/Blender" python3 desktop/test-ui.py

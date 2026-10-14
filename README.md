@@ -10,6 +10,18 @@ A local research assistant, a Blender add-on, an API adapter and recovered appli
 | Source extractor | `openscience-variants/extracted-claude-science/bun-decompiler` | Recover inert source with parser-validated boundaries |
 | Recovered source | `decompiled_bundles` and `openscience-src` inside the component folders | Inspect JavaScript and Bun runtime sources |
 
+## Desktop app
+
+The `desktop` patch provides an authored macOS AppKit/WebKit host, Python daemon and HTTP bridge for the retained Blender extension. It uses the research UI with scene controls. Build and usage instructions are in [desktop/README.md](desktop/README.md).
+
+```sh
+pip install -r openscience-variants/own-openscience/OpenScience/requirements.txt
+python3 desktop/build-app.py
+open "$HOME/Applications/Research and Blender.app"
+```
+
+Install Blender separately. The app uses an external Python 3.11+ runtime selected at build time; rebuild when moving to another computer. Opening Blender from the scene panel starts a fresh scene. Python scene commands require the permission checkbox.
+
 ## OpenScience
 
 Requires Python 3.11 or later.
@@ -56,7 +68,7 @@ python3 openscience-variants/extracted-claude-science/bun-decompiler/decompile.p
 
 The extractor parses complete statements and records exact source byte ranges and hashes. Program partitions share bindings and assemble in their recorded order. Bun builtin sources containing host intrinsics are marked separately. JavaScript assembly validates the whole program and rejects missing partitions.
 
-The recovered frontend contains 417 JavaScript bundles. Rebuilding the original desktop app still requires the Tauri native project, HTML entry point and native sidecar sources. The extracted provider packages retain unresolved `workspace:*` dependencies. Reconstructing a native Bun executable also requires its complete original layout and metadata. OpenScience and the community Blender add-on provide the runnable implementations.
+The recovered frontend contains 417 JavaScript bundles. Rebuilding the original desktop app still requires the Tauri native project, HTML entry point and native sidecar sources. The extracted provider packages retain unresolved `workspace:*` dependencies. Reconstructing a native Bun executable also requires its complete original layout and metadata. The desktop patch, OpenScience and the community Blender add-on provide runnable implementations. The patch follows retained interfaces; it does not reproduce the unavailable original native sources.
 
 ## Tests
 
@@ -69,7 +81,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 openscience-variants/extracted-claude-science/
 PYTHONDONTWRITEBYTECODE=1 python3 3d-agent/3d-agent-community/tests/test-addon.py
 ```
 
-Offline tests mock provider responses and require no API credits. Scene integration tests require an actual Blender installation.
+Offline tests mock provider responses and require no API credits. Scene integration tests require an actual Blender installation. The macOS CI job builds the replacement, exercises its HTTP/TCP bridge with Blender, and tests research and scene interactions in WKWebView.
 
 ## Licence
 

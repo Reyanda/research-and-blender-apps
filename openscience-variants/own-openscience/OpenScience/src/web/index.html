@@ -271,6 +271,14 @@
         .feature h3 { font-size: 0.9rem; margin-bottom: 4px; }
         .feature p { font-size: 0.75rem; color: var(--text-secondary); }
         
+        .blender-panel { padding: 24px; overflow: auto; }
+        .blender-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+        .blender-controls button { padding: 8px 14px; cursor: pointer; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary); }
+        .blender-controls button:disabled { opacity: .5; cursor: default; }
+        .scene-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .scene-table th, .scene-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+        .blender-details { margin: 16px 0; white-space: pre-wrap; }
+
         /* Modal */
         .modal-bg {
             position: fixed;
@@ -335,6 +343,7 @@
                 </div>
                 <button class="new-btn" onclick="showModal()">+ New Project</button>
             </div>
+            <button class="new-btn" id="blenderNav" onclick="showBlender()" style="display:none">Blender scene</button>
             <div class="projects" id="projects"></div>
         </div>
         
@@ -367,6 +376,21 @@
                 </div>
             </div>
             
+            <section class="blender-panel" id="blenderPanel" style="display:none">
+                <h1>Blender scene</h1>
+                <p id="blenderStatus" role="status">Connect to Blender to inspect the current scene.</p>
+                <div class="blender-controls">
+                    <button id="openBlenderBtn" onclick="openBlender()">Open Blender</button>
+                    <button onclick="refreshScene()">Refresh scene</button>
+                    <label><input type="checkbox" id="allowBlenderCode" onchange="setBlenderPermission()"> Allow Python commands in Blender</label>
+                    <button id="createCubeBtn" onclick="createBlenderCube()" disabled>Create cube</button>
+                </div>
+                <table class="scene-table">
+                    <thead><tr><th>Object</th><th>Type</th><th>Position</th><th>Details</th></tr></thead>
+                    <tbody id="sceneObjects"></tbody>
+                </table>
+                <p class="blender-details" id="blenderDetails"></p>
+            </section>
             <div class="chat" id="chat" style="display:none"></div>
             
             <div class="input-area" id="inputArea" style="display:none">
@@ -406,10 +430,103 @@
                 body: opts.body ? JSON.stringify(opts.body) : undefined
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
+            if (!res.ok) throw new Error(data.detail || data.message || data.error || `Request failed (${res.status})`);
             return data;
         }
         
+        async function blenderCommand(type, params = {}) {
+            const reply = await api('/v1/blender', {method: 'POST', body: {type, params}});
+            if (reply.status !== 'success' || reply.result?.error) throw new Error(reply.message || reply.result?.error || reply.error || 'Blender command failed');
+            return reply.result;
+        }
+
+        async function showBlender() {
+            document.getElementById('title').textContent = 'Blender scene';
+            for (const id of ['welcome', 'chat', 'inputArea']) document.getElementById(id).style.display = 'none';
+            document.getElementById('blenderPanel').style.display = 'block';
+            await refreshScene();
+        }
+
+        async function refreshScene() {
+            const status = document.getElementById('blenderStatus');
+            try {
+                const connection = await api('/api/blender/status');
+                document.getElementById('allowBlenderCode').checked = connection.code_execution_enabled;
+                document.getElementById('createCubeBtn').disabled = !connection.running || !connection.code_execution_enabled;
+                if (!connection.running) {
+                    status.textContent = 'Blender is not connected. Open Blender to start a new scene.';
+                    document.getElementById('sceneObjects').replaceChildren();
+                    return;
+                }
+                const scene = await blenderCommand('get_scene_info');
+                status.textContent = scene.name + ': ' + scene.object_count + ' objects';
+                const rows = document.getElementById('sceneObjects');
+                rows.replaceChildren();
+                for (const object of scene.objects) {
+                    const row = document.createElement('tr');
+                    for (const value of [object.name, object.type, object.location.join(', ')]) {
+                        const cell = document.createElement('td'); cell.textContent = value; row.appendChild(cell);
+                    }
+                    const cell = document.createElement('td');
+                    const button = document.createElement('button'); button.textContent = 'Inspect';
+                    button.addEventListener('click', () => inspectBlenderObject(object));
+                    cell.appendChild(button); row.appendChild(cell); rows.appendChild(row);
+                }
+            } catch (error) { status.textContent = error.message; }
+        }
+
+        async function openBlender() {
+            const button = document.getElementById('openBlenderBtn');
+            button.disabled = true;
+            document.getElementById('blenderStatus').textContent = 'Opening Blender';
+            try {
+                const reply = await api('/api/blender/start', {method: 'POST'});
+                if (reply.status !== 'success') throw new Error(reply.message || reply.error);
+                for (let attempt = 0; attempt < 30; attempt++) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    const connection = await api('/api/blender/status');
+                    if (connection.running) { await refreshScene(); return; }
+                }
+                throw new Error('Blender has not connected yet. Refresh the scene after its window opens.');
+            } catch (error) { document.getElementById('blenderStatus').textContent = error.message; }
+            finally { button.disabled = false; }
+        }
+
+        async function setBlenderPermission() {
+            const checkbox = document.getElementById('allowBlenderCode');
+            try {
+                const result = await api('/api/blender/permission', {method: 'POST', body: {enabled: checkbox.checked}});
+                checkbox.checked = result.code_execution_enabled;
+                await refreshScene();
+            } catch (error) {
+                checkbox.checked = !checkbox.checked;
+                document.getElementById('blenderStatus').textContent = error.message;
+            }
+        }
+
+        async function createBlenderCube() {
+            const button = document.getElementById('createCubeBtn');
+            button.disabled = true;
+            try {
+                await blenderCommand('execute_code', {code: 'import bpy\nbpy.ops.mesh.primitive_cube_add()'});
+                await refreshScene();
+            } catch (error) { document.getElementById('blenderStatus').textContent = error.message; }
+            finally { button.disabled = !document.getElementById('allowBlenderCode').checked; }
+        }
+
+        async function inspectBlenderObject(object) {
+            try {
+                const info = await blenderCommand(object.type === 'MESH' ? 'get_mesh_stats' : 'get_object_info', {name: object.name});
+                document.getElementById('blenderDetails').textContent = object.type === 'MESH'
+                    ? info.name + ': ' + info.vertices + ' vertices, ' + info.edges + ' edges, ' + info.faces + ' faces'
+                    : info.name + ': ' + info.type;
+            } catch (error) { document.getElementById('blenderDetails').textContent = error.message; }
+        }
+
+        api('/api/blender/status').then(() => {
+            document.getElementById('blenderNav').style.display = 'block';
+        }).catch(() => {});
+
         async function loadProjects() {
             const { projects } = await api('/api/projects');
             const el = document.getElementById('projects');
@@ -422,6 +539,7 @@
         }
         
         async function selectProject(id) {
+            document.getElementById('blenderPanel').style.display = 'none';
             currentProject = id;
             const project = await api(`/api/projects/${id}`);
             document.getElementById('title').textContent = project.name;

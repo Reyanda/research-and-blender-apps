@@ -9,3 +9,5 @@ The recovered frontend contains React, Mermaid, syntax grammars and other depend
 Bun builtin sources retain upstream comments, with original copyright and licence declarations. Some use Bun runtime host syntax. The Babel parser dependency is MIT-licensed and obtained through npm.
 
 Original compiled runtime containers and the local pre-repair Git snapshot are excluded from this release. Recovery indices retain file hashes and original byte ranges for comparison with authorised inputs.
+
+The retained TCP Blender extension declares Apache-2.0 in its `blender_manifest.toml` and names Drexfy Tecnologies LTDA as maintainer. The desktop patch includes this extension in its application resources with its original source and manifest. GPL-3.0-or-later applies to the newly authored desktop host and daemon. Blender is installed separately and is not redistributed in this repository.
