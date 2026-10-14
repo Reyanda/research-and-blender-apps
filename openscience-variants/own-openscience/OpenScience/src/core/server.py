@@ -317,6 +317,8 @@ identities and do not invent analysis results when execution is unavailable."""
 # ── Chat ──────────────────────────────────────────────────────
 
 async def converse(pid, message, model=None, extra_system=None):
+    from .workspace import require_active
+    require_active(pid)
     proj = get_proj(pid)
     if not proj: raise HTTPException(404)
     msgs = [{"role":"system","content":SYSTEM}]

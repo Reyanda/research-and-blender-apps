@@ -3,6 +3,7 @@ import csv
 import hashlib
 import html
 import io
+import json
 import math
 import re
 import uuid
@@ -12,6 +13,12 @@ from fastapi import APIRouter, HTTPException, Request
 from . import workspace
 
 router = APIRouter()
+
+@router.post('/api/render/markdown')
+async def render_message(request: Request):
+    data = await workspace.body(request)
+    source = workspace.text(data.get('content'), 'Message', 100000, empty=True)
+    return markdown_preview(source)
 
 
 def csv_preview(content, delimiter=','):
@@ -116,7 +123,15 @@ def markdown_preview(content):
     try:
         from markdown_it import MarkdownIt
         source, math_blocks, math_available = markdown_math(content)
-        rendered = MarkdownIt('commonmark', {'html': False}).render(source)
+        renderer = MarkdownIt('commonmark', {'html': False}).enable('table')
+        tokens = renderer.parse(source)
+        for token in tokens:
+            if token.type == 'fence' and token.info.strip().lower() == 'json':
+                try:
+                    token.content = json.dumps(json.loads(token.content), indent=2, ensure_ascii=False) + '\n'
+                except (ValueError, RecursionError):
+                    pass
+        rendered = renderer.renderer.render(tokens, renderer.options, {})
         for marker, mathml in math_blocks.items():
             rendered = rendered.replace(marker, mathml)
         return {'kind': 'markdown', 'html': rendered, 'math_renderer': 'latex2mathml' if math_available else None,
@@ -161,6 +176,11 @@ async def preview(pid: str, aid: str, version_id: str | None = None):
         value = fasta_preview(source)
     elif extension in ('.md', '.markdown') or a['content_type'] == 'text/markdown':
         value = markdown_preview(source)
+    elif extension == '.json' or a['content_type'] == 'application/json':
+        try:
+            value = {'kind': 'json', 'value': json.loads(source), 'truncated': False}
+        except ValueError:
+            value = {'kind': 'text', 'content': source, 'truncated': False}
     else:
         value = {'kind': 'text', 'content': source[:200000], 'truncated': len(source) > 200000}
     return {**common, **value}

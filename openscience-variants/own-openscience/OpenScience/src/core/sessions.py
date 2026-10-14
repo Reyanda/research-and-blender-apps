@@ -108,6 +108,8 @@ async def create(req: NewFrame):
     project = backend().get_proj(req.project_id)
     if not project:
         raise HTTPException(404, 'Project not found')
+    if project.get('status', 'active') != 'active':
+        raise HTTPException(409, 'Reopen the project before starting a session')
     existing = list((backend().DATA / 'projects' / req.project_id / 'sessions').glob('*.json'))
     history = complete_history(json.loads(json.dumps(project.get('messages', [])))) if not existing else []
     frame = {'id': uuid.uuid4().hex[:16], 'project_id': req.project_id,
@@ -125,7 +127,12 @@ async def benches(pid: str):
 
 @router.get('/api/frames/{fid}')
 async def get(fid: str):
-    return find(fid)
+    from .renderers import markdown_preview
+    frame = find(fid)
+    return {**frame, 'messages': [
+        {**m, 'rendered_html': markdown_preview(m['content'])['html']}
+        if m.get('role') == 'assistant' and m.get('content') else m
+        for m in frame.get('messages', [])]}
 
 @router.get('/api/frames/{fid}/messages')
 async def messages(fid: str):
@@ -177,6 +184,8 @@ async def operation(frame, req):
         ACTIVE_FRAME.reset(token)
 
 async def start(frame, req):
+    from .workspace import require_active
+    require_active(frame['project_id'])
     fid = frame['id']
     if fid in _tasks:
         raise HTTPException(409, 'Session already running')
@@ -325,6 +334,8 @@ async def notebook(fid: str, language: str = 'python'):
 @router.post('/api/frames/{fid}/kernel-exec')
 async def execute(fid: str, req: Cell):
     frame = find(fid)
+    from .workspace import require_active
+    require_active(frame['project_id'])
     if fid in _tasks:
         raise HTTPException(409, 'Session is running')
     entry = {'id': uuid.uuid4().hex[:16], 'language': req.language, 'code': req.code, 'started_at': now(), 'status': 'running'}

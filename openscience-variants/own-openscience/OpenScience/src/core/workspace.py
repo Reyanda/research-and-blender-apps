@@ -75,6 +75,11 @@ def filename(value):
 
 
 async def body(request):
+    method = getattr(request, 'method', 'GET')
+    route = getattr(request, 'scope', {}).get('path', '')
+    match = re.match(r'^/api/projects/([a-f0-9]{16})(/.*)?$', route)
+    if match and method in ('POST', 'PUT', 'PATCH', 'DELETE') and not (method == 'DELETE' and not match[2]):
+        require_active(match[1])
     data = bytearray()
     async for chunk in request.stream():
         data.extend(chunk)
@@ -136,6 +141,7 @@ def add_version(pid, a, content, metadata):
 
 
 async def save_artifact(pid, filename_value, content, content_type='application/octet-stream', metadata=None, folder_id=None):
+    require_active(pid)
     name = filename(filename_value)
     if not isinstance(content, bytes) or len(content) > MAX_FILE:
         raise HTTPException(413, 'Artifact exceeds 16 MB limit')
@@ -143,7 +149,7 @@ async def save_artifact(pid, filename_value, content, content_type='application/
     if not re.fullmatch(r'[A-Za-z0-9!#$&^_.+\-]+/[A-Za-z0-9!#$&^_.+\-]+(?:; charset=[A-Za-z0-9\-]+)?', content_type):
         raise HTTPException(400, 'Invalid content type')
     async with _lock:
-        p = project(pid)
+        p = require_active(pid)
         if folder_id is not None:
             item(p, 'folders', folder_id)
         extraction = extract_pdf(content) if content_type == 'application/pdf' else None
@@ -606,3 +612,82 @@ def extract_pdf(content):
                 'page_limit': 50, 'character_limit': 30000}
     except Exception:
         return {'status': 'invalid', 'reason': 'PDF text could not be extracted'}
+
+
+def require_active(pid):
+    value = project(pid)
+    if value.get('status', 'active') != 'active':
+        raise HTTPException(409, 'Reopen the project before changing its contents')
+    return value
+
+def project_busy(pid):
+    from . import sessions, reviewer
+    return any((srv().DATA / 'projects' / pid / 'sessions' / (fid + '.json')).exists()
+               for fid in set(sessions._tasks) | set(reviewer._tasks))
+
+async def stop_project_kernels(pid):
+    from .kernels import interrupt
+    for file in (srv().DATA / 'projects' / pid / 'sessions').glob('*.json'):
+        await interrupt(file.stem)
+
+def index_project(value):
+    index = srv().load()
+    index['projects'][value['id']] = {key: value.get(key) for key in
+                                    ('id', 'name', 'description', 'created_at', 'updated_at', 'status', 'closed_at')}
+    srv().save(index)
+
+@router.post('/api/projects/{pid}/close')
+async def close_project(pid: str):
+    async with _lock:
+        value = project(pid)
+        if project_busy(pid):
+            raise HTTPException(409, 'Stop the running session before closing the project')
+        value.update(status='closed', closed_at=now()); persist(pid, value); index_project(value)
+        await stop_project_kernels(pid)
+        return {'id': pid, 'status': 'closed'}
+
+@router.post('/api/projects/{pid}/reopen')
+async def reopen_project(pid: str):
+    async with _lock:
+        value = project(pid); value.update(status='active', closed_at=None)
+        persist(pid, value); index_project(value)
+        return {'id': pid, 'status': 'active'}
+
+@router.delete('/api/projects/{pid}')
+async def delete_project(pid: str, request: Request):
+    data = await body(request)
+    async with _lock:
+        value = project(pid)
+        if data.get('confirm_name') != value['name']:
+            raise HTTPException(400, 'Confirm deletion with the exact project name')
+        if project_busy(pid):
+            raise HTTPException(409, 'Stop the running session before deleting the project')
+        destination = srv().DATA / 'trash/projects' / pid
+        if destination.exists():
+            raise HTTPException(409, 'A deleted project with this identity already exists')
+        value.update(status='deleted', deleted_at=now()); persist(pid, value)
+        await stop_project_kernels(pid)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(srv().DATA / 'projects' / pid), destination)
+        index = srv().load(); index['projects'].pop(pid, None); srv().save(index)
+        return {'id': pid, 'deleted': True, 'recoverable': True}
+
+@router.get('/api/deleted-projects')
+async def deleted_projects():
+    rows = [json.loads(p.read_text()) for p in (srv().DATA / 'trash/projects').glob('*/project.json')]
+    return {'projects': [{k: value.get(k) for k in ('id', 'name', 'deleted_at')} for value in rows]}
+
+@router.post('/api/deleted-projects/{pid}/restore')
+async def restore_project(pid: str):
+    ident(pid)
+    async with _lock:
+        source = srv().DATA / 'trash/projects' / pid
+        target = srv().DATA / 'projects' / pid
+        if not (source / 'project.json').is_file():
+            raise HTTPException(404, 'Deleted project not found')
+        if target.exists():
+            raise HTTPException(409, 'Project identity is already present')
+        shutil.move(str(source), target)
+        value = project(pid); value.update(status='active', closed_at=None); value.pop('deleted_at', None)
+        persist(pid, value); index_project(value)
+        return value
